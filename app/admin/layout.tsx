@@ -1,0 +1,25 @@
+import { Guard } from "@/components/guard";
+import { BottomNav, type NavItem } from "@/components/bottom-nav";
+
+const NAV: NavItem[] = [
+  { href: "/admin", label: "대시보드", icon: "📊" },
+  { href: "/admin/staff", label: "직원", icon: "👥" },
+  { href: "/admin/attendance", label: "출퇴근", icon: "✅" },
+  { href: "/admin/payroll", label: "급여", icon: "💰" },
+  { href: "/admin/settings", label: "설정", icon: "⚙️" },
+];
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Guard need="admin">
+      <div className="min-h-screen bg-slate-100 pb-20">
+        <div className="mx-auto max-w-md">{children}</div>
+      </div>
+      <BottomNav items={NAV} />
+    </Guard>
+  );
+}
