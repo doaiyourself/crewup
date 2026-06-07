@@ -52,7 +52,7 @@ export default function MyPayrollPage() {
         {p && emp ? (
           <>
             {/* 실지급액 강조 */}
-            <Card className="bg-brand text-white !ring-0">
+            <Card tone="brand">
               <p className="text-xs text-blue-100">실지급 예상액</p>
               <p className="mt-1 text-3xl font-extrabold">{won(netPay(p))}</p>
               <p className="mt-1 text-xs text-blue-100">

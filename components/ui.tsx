@@ -1,9 +1,10 @@
 "use client";
 
 import { useSession } from "@/lib/session";
-import { ROLE_LABEL, STORE } from "@/lib/mock-data";
+import { ROLE_LABEL } from "@/lib/mock-data";
+import { StoreSwitcher } from "@/components/store-switcher";
 
-// 페이지 상단 브랜드 헤더 (매장명 + 타이틀)
+// 페이지 상단 브랜드 헤더 (매장 전환기 + 타이틀)
 export function PageHeader({
   title,
   subtitle,
@@ -14,16 +15,18 @@ export function PageHeader({
   right?: React.ReactNode;
 }) {
   return (
-    <header className="sticky top-0 z-10 bg-brand px-5 pb-4 pt-6 text-white shadow-md">
-      <div className="mx-auto flex max-w-md items-end justify-between">
-        <div>
-          <p className="text-xs font-medium text-blue-100">{STORE.name}</p>
-          <h1 className="mt-0.5 text-xl font-bold">{title}</h1>
+    <header className="sticky top-0 z-10 bg-brand px-5 pb-4 pt-5 text-white shadow-md">
+      <div className="mx-auto max-w-md">
+        <div className="flex items-center justify-between">
+          <StoreSwitcher />
+          {right}
+        </div>
+        <div className="mt-3">
+          <h1 className="text-xl font-bold">{title}</h1>
           {subtitle && (
             <p className="mt-0.5 text-sm text-blue-100">{subtitle}</p>
           )}
         </div>
-        {right}
       </div>
     </header>
   );
@@ -56,14 +59,18 @@ export function Avatar({
 export function Card({
   children,
   className = "",
+  tone = "default",
 }: {
   children: React.ReactNode;
   className?: string;
+  tone?: "default" | "brand";
 }) {
+  const toneCls =
+    tone === "brand"
+      ? "bg-brand text-white"
+      : "bg-white ring-1 ring-slate-100";
   return (
-    <div
-      className={`rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 ${className}`}
-    >
+    <div className={`rounded-2xl p-4 shadow-sm ${toneCls} ${className}`}>
       {children}
     </div>
   );

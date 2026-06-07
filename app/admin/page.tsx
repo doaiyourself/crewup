@@ -27,7 +27,7 @@ function StatCard({
   accent?: boolean;
 }) {
   return (
-    <Card className={accent ? "bg-brand !ring-0 text-white" : ""}>
+    <Card tone={accent ? "brand" : "default"}>
       <p className={`text-xs ${accent ? "text-blue-100" : "text-slate-500"}`}>
         {label}
       </p>

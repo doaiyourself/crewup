@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/lib/session";
-import { STORE, ROLE_LABEL } from "@/lib/mock-data";
+import { ROLE_LABEL } from "@/lib/mock-data";
 import { PageHeader, Card, LogoutButton } from "@/components/ui";
 
 function MenuRow({ icon, label, desc }: { icon: string; label: string; desc?: string }) {
@@ -18,7 +18,7 @@ function MenuRow({ icon, label, desc }: { icon: string; label: string; desc?: st
 }
 
 export default function SettingsPage() {
-  const { account, logout } = useSession();
+  const { account, logout, currentMembership } = useSession();
 
   return (
     <>
@@ -27,15 +27,33 @@ export default function SettingsPage() {
       <div className="px-4 pt-4">
         {/* 매장 정보 */}
         <Card>
-          <p className="text-base font-bold text-slate-900">{STORE.name}</p>
-          <p className="mt-1 text-xs text-slate-500">사업자번호 {STORE.bizNo}</p>
-          <p className="text-xs text-slate-500">{STORE.address}</p>
+          <p className="text-base font-bold text-slate-900">
+            {currentMembership?.storeName ?? "매장"}
+          </p>
           {account && (
-            <p className="mt-2 text-xs text-brand">
+            <p className="mt-1 text-xs text-brand">
               로그인: {account.name} ({ROLE_LABEL[account.role]})
             </p>
           )}
         </Card>
+
+        {/* 매장 초대 코드 */}
+        {currentMembership?.joinCode && (
+          <Card className="mt-3 bg-brand text-white !ring-0">
+            <p className="text-xs text-blue-100">매장 초대 코드</p>
+            <div className="mt-1 flex items-center justify-between">
+              <p className="text-2xl font-extrabold tracking-[0.25em]">
+                {currentMembership.joinCode}
+              </p>
+              <span className="rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold">
+                직원에게 공유
+              </span>
+            </div>
+            <p className="mt-1.5 text-xs text-blue-100">
+              직원·알바가 이 코드로 매장에 합류할 수 있어요.
+            </p>
+          </Card>
+        )}
 
         <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">매장 관리</h2>
         <Card className="!p-0 divide-y divide-slate-100">

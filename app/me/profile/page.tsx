@@ -1,12 +1,7 @@
 "use client";
 
 import { useSession } from "@/lib/session";
-import {
-  getEmployee,
-  ROLE_LABEL,
-  CONTRACT_LABEL,
-  STORE,
-} from "@/lib/mock-data";
+import { getEmployee, ROLE_LABEL, CONTRACT_LABEL } from "@/lib/mock-data";
 import { won } from "@/lib/format";
 import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
 
@@ -20,7 +15,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function ProfilePage() {
-  const { account, logout } = useSession();
+  const { account, logout, currentMembership } = useSession();
   if (!account) return null;
   const emp = getEmployee(account.id);
 
@@ -43,7 +38,7 @@ export default function ProfilePage() {
           근무 정보
         </h2>
         <Card className="!py-2 divide-y divide-slate-100">
-          <InfoRow label="소속 매장" value={STORE.name} />
+          <InfoRow label="소속 매장" value={currentMembership?.storeName ?? "-"} />
           {emp && <InfoRow label="시급" value={won(emp.hourlyWage)} />}
           {emp && <InfoRow label="연락처" value={emp.phone} />}
         </Card>

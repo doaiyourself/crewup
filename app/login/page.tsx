@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { LogoMark } from "@/components/logo";
 import { useSession } from "@/lib/session";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { signInWithKakao } from "@/lib/supabase/auth";
 import {
   DEMO_ACCOUNTS,
   ROLE_LABEL,
@@ -11,13 +15,39 @@ import {
 } from "@/lib/mock-data";
 
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-gradient-to-b from-brand to-brand-dark" />
+      }
+    >
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
   const { login } = useSession();
   const router = useRouter();
+  const params = useSearchParams();
   const [picking, setPicking] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const hasError = params.get("error") === "auth";
 
-  const handleKakao = () => {
-    // 추후 Supabase Auth 카카오 OAuth로 교체. 지금은 데모 계정 선택.
-    setPicking(true);
+  const handleKakao = async () => {
+    if (isSupabaseConfigured) {
+      // 실제 카카오 OAuth (Supabase Auth)
+      setLoading(true);
+      const { error } = await signInWithKakao("/");
+      if (error) {
+        setLoading(false);
+        alert("로그인에 실패했어요. 잠시 후 다시 시도해 주세요.");
+      }
+      // 성공 시 카카오로 리다이렉트됨
+    } else {
+      // 데모 모드: 역할 선택
+      setPicking(true);
+    }
   };
 
   const handleSelect = (acc: Account) => {
@@ -29,28 +59,43 @@ export default function LoginPage() {
     <main className="flex min-h-screen flex-col items-center justify-between bg-gradient-to-b from-brand to-brand-dark px-6 py-14 text-white">
       {/* 로고/브랜드 */}
       <div className="flex flex-1 flex-col items-center justify-center text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/15 text-4xl shadow-lg backdrop-blur">
-          👥
+        <div className="rounded-3xl bg-white/15 p-4 shadow-lg backdrop-blur">
+          <LogoMark size={64} variant="white" />
         </div>
         <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Crew Up</h1>
         <p className="mt-2 text-sm text-blue-100">
           알바 출퇴근 · 근로계약 · 급여 관리
         </p>
+        <Link
+          href="/about"
+          className="mt-3 text-xs font-medium text-blue-100/80 underline underline-offset-2"
+        >
+          서비스 소개 보기
+        </Link>
       </div>
 
       {/* 로그인 영역 */}
       <div className="w-full max-w-md">
+        {hasError && (
+          <p className="mb-3 rounded-lg bg-red-500/20 py-2 text-center text-xs font-medium text-red-50">
+            로그인이 취소되었거나 실패했어요. 다시 시도해 주세요.
+          </p>
+        )}
+
         {!picking ? (
           <>
             <button
               onClick={handleKakao}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#FEE500] py-3.5 text-base font-bold text-[#191600] shadow-md transition active:scale-[0.98]"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#FEE500] py-3.5 text-base font-bold text-[#191600] shadow-md transition active:scale-[0.98] disabled:opacity-70"
             >
               <span className="text-lg">💬</span>
-              카카오로 시작하기
+              {loading ? "이동 중…" : "카카오로 시작하기"}
             </button>
             <p className="mt-4 text-center text-xs text-blue-100/80">
-              로그인 시 이용약관 및 개인정보처리방침에 동의합니다.
+              {isSupabaseConfigured
+                ? "로그인 시 이용약관 및 개인정보처리방침에 동의합니다."
+                : "데모 모드 · Supabase 연결 시 실제 카카오 로그인으로 전환됩니다."}
             </p>
           </>
         ) : (

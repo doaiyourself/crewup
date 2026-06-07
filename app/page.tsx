@@ -5,21 +5,23 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session";
 import { isAdminRole } from "@/lib/mock-data";
 
-// 진입점: 세션 상태에 따라 로그인 / 관리자 / 직원 홈으로 분기
+// 진입점: 세션 상태에 따라 로그인 / 온보딩 / 관리자 / 직원 홈으로 분기
 export default function Index() {
-  const { account, ready } = useSession();
+  const { account, ready, needsOnboarding } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     if (!ready) return;
-    if (!account) {
+    if (needsOnboarding) {
+      router.replace("/onboarding");
+    } else if (!account) {
       router.replace("/login");
     } else if (isAdminRole(account.role)) {
       router.replace("/admin");
     } else {
       router.replace("/me");
     }
-  }, [account, ready, router]);
+  }, [account, ready, needsOnboarding, router]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100">

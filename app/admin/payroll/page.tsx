@@ -20,7 +20,7 @@ export default function AdminPayrollPage() {
 
       <div className="px-4 pt-4">
         {/* 총 인건비 */}
-        <Card className="bg-brand text-white !ring-0">
+        <Card tone="brand">
           <p className="text-xs text-blue-100">이번 달 총 인건비 (지급액 합계)</p>
           <p className="mt-1 text-3xl font-extrabold">{won(totalGross)}</p>
           <div className="mt-3 flex gap-4 text-xs text-blue-100">
