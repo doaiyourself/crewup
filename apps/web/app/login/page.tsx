@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogoMark } from "@/components/logo";
+import { InstallButton } from "@/components/install-button";
 import { useSession } from "@/lib/session";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { signInWithKakao } from "@/lib/supabase/auth";
@@ -92,6 +93,9 @@ function LoginInner() {
               <span className="text-lg">💬</span>
               {loading ? "이동 중…" : "카카오로 시작하기"}
             </button>
+            <div className="mt-3">
+              <InstallButton />
+            </div>
             <p className="mt-4 text-center text-xs text-blue-100/80">
               {isSupabaseConfigured
                 ? "로그인 시 이용약관 및 개인정보처리방침에 동의합니다."
