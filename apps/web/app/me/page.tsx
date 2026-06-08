@@ -24,7 +24,8 @@ function hhmm(iso: string | null): string {
 export default function MeHome() {
   const { account, currentStoreId } = useSession();
   const emp = account ? getEmployee(account.id) : undefined;
-  const { today: att, clockIn, clockOut, busy } = useMyAttendance(currentStoreId);
+  const { today: att, clockIn, clockOut, busy, error, requiresQr } =
+    useMyAttendance(currentStoreId);
   const [today, setToday] = useState("");
   const [dow, setDow] = useState<number | null>(null);
 
@@ -83,22 +84,33 @@ export default function MeHome() {
             </span>
           </div>
 
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={clockIn}
-              disabled={busy || att.status === "working" || att.status === "done"}
-              className="flex-1 rounded-xl bg-brand py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400"
-            >
-              출근하기
-            </button>
-            <button
-              onClick={clockOut}
-              disabled={busy || att.status !== "working"}
-              className="flex-1 rounded-xl border border-slate-300 bg-white py-3 text-sm font-bold text-slate-700 transition active:scale-[0.98] disabled:border-slate-200 disabled:text-slate-300"
-            >
-              퇴근하기
-            </button>
-          </div>
+          {requiresQr ? (
+            <div className="mt-3 rounded-xl bg-slate-50 py-3 text-center text-sm font-semibold text-slate-600">
+              📷 매장 QR을 스캔해 출퇴근하세요
+            </div>
+          ) : (
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={clockIn}
+                disabled={busy || att.status === "working" || att.status === "done"}
+                className="flex-1 rounded-xl bg-brand py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400"
+              >
+                {busy ? "처리 중…" : "출근하기"}
+              </button>
+              <button
+                onClick={clockOut}
+                disabled={busy || att.status !== "working"}
+                className="flex-1 rounded-xl border border-slate-300 bg-white py-3 text-sm font-bold text-slate-700 transition active:scale-[0.98] disabled:border-slate-200 disabled:text-slate-300"
+              >
+                퇴근하기
+              </button>
+            </div>
+          )}
+          {error && (
+            <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-center text-xs font-medium text-red-600">
+              {error}
+            </p>
+          )}
         </Card>
 
         {/* 요약 2개 */}

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ROLE_LABEL } from "@/lib/mock-data";
 import { PageHeader, Card, LogoutButton } from "@/components/ui";
 import { PinPad } from "@/components/pin-pad";
+import { AttendanceConfig } from "@/components/attendance-config";
 
 function MenuRow({ icon, label, desc }: { icon: string; label: string; desc?: string }) {
   return (
@@ -216,6 +217,12 @@ export default function SettingsPage() {
             </p>
           </Card>
         )}
+
+        {/* 출퇴근 방식 (GPS/QR) */}
+        <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">
+          출퇴근 인증 방식
+        </h2>
+        {currentStoreId && <AttendanceConfig storeId={currentStoreId} />}
 
         {/* 키오스크(매장 대시보드) */}
         <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">

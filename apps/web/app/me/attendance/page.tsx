@@ -65,8 +65,18 @@ function RecordRow({ r }: { r: DayRecord }) {
 
 export default function AttendancePage() {
   const { account, currentStoreId } = useSession();
-  const { today: att, history, stats, loading, busy, clockIn, clockOut } =
-    useMyAttendance(currentStoreId);
+  const {
+    today: att,
+    history,
+    stats,
+    loading,
+    busy,
+    error,
+    method,
+    requiresQr,
+    clockIn,
+    clockOut,
+  } = useMyAttendance(currentStoreId);
   const [todayStr, setTodayStr] = useState("");
   const [dow, setDow] = useState<number | null>(null);
 
@@ -108,13 +118,23 @@ export default function AttendancePage() {
               </p>
             </div>
           </div>
-          {att.status !== "working" ? (
+          {requiresQr ? (
+            <div className="rounded-2xl bg-slate-50 py-5 text-center">
+              <p className="text-3xl">📷</p>
+              <p className="mt-2 text-sm font-semibold text-slate-700">
+                매장 QR을 스캔해 출퇴근하세요
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">
+                매장에 비치된 Crew Up QR을 휴대폰 카메라로 찍으면 됩니다.
+              </p>
+            </div>
+          ) : att.status !== "working" ? (
             <button
               onClick={clockIn}
               disabled={busy || att.status === "done"}
               className="w-full rounded-2xl bg-brand py-4 text-base font-bold text-white transition active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400"
             >
-              {att.status === "done" ? "오늘 근무 완료" : "출근하기"}
+              {busy ? "처리 중…" : att.status === "done" ? "오늘 근무 완료" : "출근하기"}
             </button>
           ) : (
             <button
@@ -122,11 +142,20 @@ export default function AttendancePage() {
               disabled={busy}
               className="w-full rounded-2xl bg-slate-800 py-4 text-base font-bold text-white transition active:scale-[0.98] disabled:opacity-60"
             >
-              퇴근하기
+              {busy ? "처리 중…" : "퇴근하기"}
             </button>
           )}
+          {error && (
+            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-center text-xs font-medium text-red-600">
+              {error}
+            </p>
+          )}
           <p className="mt-3 text-center text-xs text-slate-400">
-            📍 매장 반경 내에서 출퇴근할 수 있어요 (위치 검증 예정)
+            {method === "gps" || method === "both"
+              ? "📍 매장 반경 안에서만 출퇴근할 수 있어요"
+              : method === "qr"
+              ? "🔒 QR 스캔으로 위치를 확인합니다"
+              : "기록은 사장님이 확인·정정할 수 있어요"}
           </p>
         </Card>
 
