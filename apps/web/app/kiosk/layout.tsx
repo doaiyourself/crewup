@@ -1,10 +1,9 @@
-import { Guard } from "@/components/guard";
-
-// 키오스크 전용 레이아웃: 관리자만, 하단 네비 없음(전체화면 공용 화면).
+// 키오스크는 세션 없는 공개 페이지 (기기 토큰으로만 동작).
+// 관리자 로그인을 기기에 두지 않으므로 가드 없음.
 export default function KioskLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <Guard need="admin">{children}</Guard>;
+  return <>{children}</>;
 }

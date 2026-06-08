@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { ROLE_LABEL } from "@/lib/mock-data";
@@ -23,17 +22,34 @@ function MenuRow({ icon, label, desc }: { icon: string; label: string; desc?: st
 
 export default function SettingsPage() {
   const { account, logout, currentMembership, currentStoreId } = useSession();
-  const router = useRouter();
   const [hasPin, setHasPin] = useState<boolean | null>(null);
-  const [pinMode, setPinMode] = useState<null | "set" | "start">(null);
+  const [pinMode, setPinMode] = useState(false);
   const [pinError, setPinError] = useState("");
+  const [devices, setDevices] = useState<
+    { id: string; label: string | null; last_used_at: string | null }[]
+  >([]);
+  const [newLink, setNewLink] = useState("");
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
+  const loadKiosk = async () => {
     if (!currentStoreId || currentStoreId === "demo-store") return;
     const supabase = createClient();
-    supabase
-      .rpc("has_kiosk_pin", { p_store_id: currentStoreId })
-      .then(({ data }) => setHasPin(data === true));
+    const [{ data: pin }, { data: devs }] = await Promise.all([
+      supabase.rpc("has_kiosk_pin", { p_store_id: currentStoreId }),
+      supabase
+        .from("kiosk_devices")
+        .select("id, label, last_used_at")
+        .eq("store_id", currentStoreId)
+        .eq("revoked", false)
+        .order("created_at"),
+    ]);
+    setHasPin(pin === true);
+    setDevices(devs ?? []);
+  };
+
+  useEffect(() => {
+    loadKiosk();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStoreId]);
 
   const handleSetPin = async (pin: string) => {
@@ -48,20 +64,36 @@ export default function SettingsPage() {
       return;
     }
     setHasPin(true);
-    setPinMode(null);
+    setPinMode(false);
   };
 
-  const handleStart = async (pin: string) => {
+  const createDevice = async () => {
     if (!currentStoreId) return;
     const supabase = createClient();
-    const { data } = await supabase.rpc("verify_kiosk_pin", {
+    const { data } = await supabase.rpc("create_kiosk_device", {
       p_store_id: currentStoreId,
-      p_pin: pin,
+      p_label: "매장 태블릿",
     });
-    if (data === true) {
-      router.push("/kiosk");
-    } else {
-      setPinError("PIN이 올바르지 않습니다.");
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row?.token) {
+      setNewLink(`${window.location.origin}/kiosk?token=${row.token}`);
+      loadKiosk();
+    }
+  };
+
+  const revokeDevice = async (id: string) => {
+    const supabase = createClient();
+    await supabase.rpc("revoke_kiosk_device", { p_id: id });
+    loadKiosk();
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(newLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* ignore */
     }
   };
 
@@ -106,36 +138,101 @@ export default function SettingsPage() {
         </h2>
         <Card>
           <p className="text-sm text-slate-600">
-            매장의 태블릿·PC에 띄워두는 공용 출퇴근 화면이에요. 직원들이 직접
-            출퇴근을 찍고, 오늘의 할일을 확인합니다.
+            매장 태블릿·PC에 띄우는 공용 출퇴근 화면이에요. <b>기기 연결 링크</b>를
+            만들어 그 기기에서 한 번 열면 연결됩니다. 키오스크에는 관리자 로그인이
+            남지 않아 안전합니다.
           </p>
-          <div className="mt-3 flex gap-2">
+
+          {/* PIN (연결 해제 보호) */}
+          <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5">
+            <span className="text-sm text-slate-600">
+              연결 해제 PIN {hasPin ? "✅ 설정됨" : "⚠️ 미설정"}
+            </span>
             <button
               onClick={() => {
                 setPinError("");
-                setPinMode("start");
+                setPinMode(true);
               }}
-              disabled={!hasPin}
-              className="flex-1 rounded-xl bg-brand py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400"
+              className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200"
             >
-              📺 키오스크 시작
-            </button>
-            <button
-              onClick={() => {
-                setPinError("");
-                setPinMode("set");
-              }}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition active:scale-[0.98]"
-            >
-              {hasPin ? "PIN 변경" : "PIN 설정"}
+              {hasPin ? "변경" : "설정"}
             </button>
           </div>
+
+          {/* 기기 연결 링크 생성 */}
+          <button
+            onClick={createDevice}
+            disabled={!hasPin}
+            className="mt-3 w-full rounded-xl bg-brand py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400"
+          >
+            ＋ 새 기기 연결 링크 만들기
+          </button>
           {!hasPin && (
             <p className="mt-2 text-xs text-amber-600">
-              먼저 4자리 이상 PIN을 설정하세요. (시작·종료 시 필요)
+              먼저 연결 해제 PIN을 설정하세요.
             </p>
           )}
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+
+          {newLink && (
+            <div className="mt-3 rounded-xl border border-brand/30 bg-blue-50/50 p-3">
+              <p className="text-xs font-semibold text-brand">연결 링크 생성됨</p>
+              <p className="mt-1 break-all rounded-lg bg-white px-3 py-2 text-xs text-slate-500">
+                {newLink}
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={copyLink}
+                  className="flex-1 rounded-lg bg-brand py-2 text-xs font-semibold text-white"
+                >
+                  {copied ? "복사됨!" : "링크 복사"}
+                </button>
+                <a
+                  href={newLink}
+                  target="_blank"
+                  rel="noopener"
+                  className="flex-1 rounded-lg border border-slate-300 bg-white py-2 text-center text-xs font-semibold text-slate-600"
+                >
+                  이 기기에서 열기
+                </a>
+              </div>
+              <p className="mt-2 text-[11px] text-slate-400">
+                ⚠️ 링크에는 기기 토큰이 들어있어요. 매장 기기에서만 열고 외부에
+                공유하지 마세요.
+              </p>
+            </div>
+          )}
+
+          {/* 연결된 기기 목록 */}
+          {devices.length > 0 && (
+            <div className="mt-3 border-t border-slate-100 pt-3">
+              <p className="mb-1 text-xs font-semibold text-slate-500">
+                연결된 기기 ({devices.length})
+              </p>
+              {devices.map((d) => (
+                <div
+                  key={d.id}
+                  className="flex items-center justify-between py-1.5 text-sm"
+                >
+                  <span className="text-slate-700">
+                    {d.label ?? "기기"}
+                    <span className="ml-2 text-xs text-slate-400">
+                      {d.last_used_at
+                        ? `최근 사용 ${new Date(d.last_used_at).toLocaleDateString("ko-KR")}`
+                        : "미사용"}
+                    </span>
+                  </span>
+                  <button
+                    onClick={() => revokeDevice(d.id)}
+                    className="text-xs font-semibold text-red-500"
+                  >
+                    연결 끊기
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
             🔒 완전 잠금을 원하면 태블릿의 가이드 액세스(아이패드)·화면 고정(안드로이드)도 함께 켜세요.
           </p>
         </Card>
@@ -172,22 +269,13 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {pinMode === "set" && (
+      {pinMode && (
         <PinPad
-          title={hasPin ? "새 PIN 설정" : "키오스크 PIN 설정"}
+          title={hasPin ? "연결 해제 PIN 변경" : "연결 해제 PIN 설정"}
           subtitle="4자리 숫자를 입력하세요"
           error={pinError}
           onSubmit={handleSetPin}
-          onCancel={() => setPinMode(null)}
-        />
-      )}
-      {pinMode === "start" && (
-        <PinPad
-          title="키오스크 시작"
-          subtitle="관리자 PIN을 입력하세요"
-          error={pinError}
-          onSubmit={handleStart}
-          onCancel={() => setPinMode(null)}
+          onCancel={() => setPinMode(false)}
         />
       )}
     </>
