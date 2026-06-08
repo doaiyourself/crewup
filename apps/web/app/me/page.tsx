@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/session";
-import { useMyAttendance } from "@/lib/attendance";
+import { useMyAttendance } from "@/lib/use-my-attendance";
 import {
   getEmployee,
   getSchedule,
@@ -13,10 +13,18 @@ import {
 import { todayLabel, shiftHours, won, netPay } from "@/lib/format";
 import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
 
+function hhmm(iso: string | null): string {
+  if (!iso) return "--:--";
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(
+    d.getMinutes()
+  ).padStart(2, "0")}`;
+}
+
 export default function MeHome() {
-  const { account } = useSession();
+  const { account, currentStoreId } = useSession();
   const emp = account ? getEmployee(account.id) : undefined;
-  const { att, clockIn, clockOut } = useMyAttendance(account?.id ?? null);
+  const { today: att, clockIn, clockOut, busy } = useMyAttendance(currentStoreId);
   const [today, setToday] = useState("");
   const [dow, setDow] = useState<number | null>(null);
 
@@ -68,24 +76,24 @@ export default function MeHome() {
 
           <div className="mt-3 flex gap-4 rounded-xl bg-slate-50 px-3 py-2.5 text-sm">
             <span className="text-slate-500">
-              출근 <b className="text-slate-800">{att.clockInAt ?? "--:--"}</b>
+              출근 <b className="text-slate-800">{hhmm(att.clockInAt)}</b>
             </span>
             <span className="text-slate-500">
-              퇴근 <b className="text-slate-800">{att.clockOutAt ?? "--:--"}</b>
+              퇴근 <b className="text-slate-800">{hhmm(att.clockOutAt)}</b>
             </span>
           </div>
 
           <div className="mt-3 flex gap-2">
             <button
               onClick={clockIn}
-              disabled={att.status === "working" || att.status === "done"}
+              disabled={busy || att.status === "working" || att.status === "done"}
               className="flex-1 rounded-xl bg-brand py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400"
             >
               출근하기
             </button>
             <button
               onClick={clockOut}
-              disabled={att.status !== "working"}
+              disabled={busy || att.status !== "working"}
               className="flex-1 rounded-xl border border-slate-300 bg-white py-3 text-sm font-bold text-slate-700 transition active:scale-[0.98] disabled:border-slate-200 disabled:text-slate-300"
             >
               퇴근하기
