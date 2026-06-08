@@ -1,7 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSession } from "@/lib/session";
-import { getEmployee, ROLE_LABEL, CONTRACT_LABEL } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/client";
+import { ROLE_LABEL } from "@/lib/mock-data";
+import { CONTRACT_STATUS_LABEL, type ContractStatus } from "@/lib/contract";
 import { won } from "@/lib/format";
 import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
 
@@ -15,9 +19,42 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function ProfilePage() {
-  const { account, logout, currentMembership } = useSession();
+  const { account, logout, currentMembership, currentStoreId } = useSession();
+  const [wage, setWage] = useState<number | null>(null);
+  const [phone, setPhone] = useState<string | null>(null);
+  const [contract, setContract] = useState<{
+    id: string;
+    status: ContractStatus;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!account || !currentStoreId || currentStoreId === "demo-store") return;
+    const supabase = createClient();
+    supabase
+      .from("memberships")
+      .select("hourly_wage")
+      .eq("store_id", currentStoreId)
+      .eq("user_id", account.id)
+      .maybeSingle()
+      .then(({ data }) => setWage(data?.hourly_wage ?? null));
+    supabase
+      .from("profiles")
+      .select("phone")
+      .eq("id", account.id)
+      .maybeSingle()
+      .then(({ data }) => setPhone(data?.phone ?? null));
+    supabase
+      .from("contracts")
+      .select("id, status")
+      .eq("store_id", currentStoreId)
+      .eq("user_id", account.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setContract(data as any));
+  }, [account, currentStoreId]);
+
   if (!account) return null;
-  const emp = getEmployee(account.id);
 
   return (
     <>
@@ -29,7 +66,8 @@ export default function ProfilePage() {
           <div>
             <p className="text-lg font-bold text-slate-900">{account.name}</p>
             <p className="text-sm text-slate-500">
-              {ROLE_LABEL[account.role]} · {account.position}
+              {ROLE_LABEL[account.role]}
+              {account.position ? ` · ${account.position}` : ""}
             </p>
           </div>
         </Card>
@@ -39,8 +77,8 @@ export default function ProfilePage() {
         </h2>
         <Card className="!py-2 divide-y divide-slate-100">
           <InfoRow label="소속 매장" value={currentMembership?.storeName ?? "-"} />
-          {emp && <InfoRow label="시급" value={won(emp.hourlyWage)} />}
-          {emp && <InfoRow label="연락처" value={emp.phone} />}
+          {wage != null && <InfoRow label="시급" value={won(wage)} />}
+          {phone && <InfoRow label="연락처" value={phone} />}
         </Card>
 
         <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">
@@ -54,20 +92,27 @@ export default function ProfilePage() {
                 상태:{" "}
                 <span
                   className={
-                    emp?.contractStatus === "signed"
+                    contract?.status === "signed"
                       ? "font-semibold text-green-600"
-                      : emp?.contractStatus === "pending"
+                      : contract?.status === "pending"
                       ? "font-semibold text-amber-600"
-                      : "font-semibold text-red-500"
+                      : "font-semibold text-slate-400"
                   }
                 >
-                  {emp ? CONTRACT_LABEL[emp.contractStatus] : "-"}
+                  {contract
+                    ? CONTRACT_STATUS_LABEL[contract.status]
+                    : "발급된 계약서 없음"}
                 </span>
               </p>
             </div>
-            <button className="rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white">
-              {emp?.contractStatus === "pending" ? "서명하기" : "열람"}
-            </button>
+            {contract && (
+              <Link
+                href={`/contract/${contract.id}`}
+                className="rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white"
+              >
+                {contract.status === "pending" ? "서명하기" : "열람"}
+              </Link>
+            )}
           </div>
         </Card>
 

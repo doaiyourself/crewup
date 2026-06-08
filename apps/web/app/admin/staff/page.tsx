@@ -7,6 +7,7 @@ import { ROLE_LABEL, isAdminRole, type Role } from "@/lib/mock-data";
 import { won } from "@/lib/format";
 import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
 import { ScheduleEditor } from "@/components/schedule-editor";
+import { ContractManager } from "@/components/contract-manager";
 
 interface Member {
   user_id: string;
@@ -35,6 +36,7 @@ export default function StaffPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [schedFor, setSchedFor] = useState<string | null>(null);
+  const [contractFor, setContractFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!currentStoreId || currentStoreId === "demo-store") {
@@ -185,24 +187,51 @@ export default function StaffPage() {
                       {m.phone ? ` · ${m.phone}` : ""}
                     </p>
                   </div>
-                  <button
-                    onClick={() =>
-                      setSchedFor((id) => (id === m.user_id ? null : m.user_id))
-                    }
-                    className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                      schedFor === m.user_id
-                        ? "bg-brand text-white"
-                        : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    스케줄
-                  </button>
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <button
+                      onClick={() => {
+                        setContractFor(null);
+                        setSchedFor((id) => (id === m.user_id ? null : m.user_id));
+                      }}
+                      className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                        schedFor === m.user_id
+                          ? "bg-brand text-white"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      스케줄
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSchedFor(null);
+                        setContractFor((id) =>
+                          id === m.user_id ? null : m.user_id
+                        );
+                      }}
+                      className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                        contractFor === m.user_id
+                          ? "bg-brand text-white"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      계약서
+                    </button>
+                  </div>
                 </div>
                 {schedFor === m.user_id && currentStoreId && (
                   <div className="mt-3 border-t border-slate-100 pt-3">
-                    <ScheduleEditor
+                    <ScheduleEditor storeId={currentStoreId} userId={m.user_id} />
+                  </div>
+                )}
+                {contractFor === m.user_id && currentStoreId && (
+                  <div className="mt-3 border-t border-slate-100 pt-3">
+                    <ContractManager
                       storeId={currentStoreId}
                       userId={m.user_id}
+                      memberName={m.name}
+                      defaultWage={m.hourly_wage}
+                      workplace={currentMembership?.storeName ?? ""}
+                      employerName={currentMembership?.storeName ?? "사업주"}
                     />
                   </div>
                 )}

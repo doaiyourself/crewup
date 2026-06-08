@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { computePayroll } from "@crewup/core";
@@ -98,22 +99,28 @@ export default function AdminPayrollPage() {
             </h2>
             <div className="space-y-2.5 pb-2">
               {computed.map((c) => (
-                <Card key={c.user_id} className="flex items-center gap-3">
-                  <Avatar name={c.name} color={c.color} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-slate-900">{c.name}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {c.pay.totalHours}시간 · {won(c.wage)}/h · 주휴{" "}
-                      {wonShort(c.pay.weeklyAllowance)}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-sm font-extrabold text-slate-900">
-                      {wonShort(c.pay.net)}
-                    </p>
-                    <p className="text-[10px] text-slate-400">실지급</p>
-                  </div>
-                </Card>
+                <Link
+                  key={c.user_id}
+                  href={`/payslip?user=${c.user_id}`}
+                  className="block"
+                >
+                  <Card className="flex items-center gap-3">
+                    <Avatar name={c.name} color={c.color} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-slate-900">{c.name}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {c.pay.totalHours}시간 · {won(c.wage)}/h · 주휴{" "}
+                        {wonShort(c.pay.weeklyAllowance)}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-extrabold text-slate-900">
+                        {wonShort(c.pay.net)}
+                      </p>
+                      <p className="text-[10px] text-slate-400">명세서 ›</p>
+                    </div>
+                  </Card>
+                </Link>
               ))}
               {computed.length === 0 && (
                 <Card className="py-8 text-center text-sm text-slate-400">

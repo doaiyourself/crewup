@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSession } from "@/lib/session";
 import { useMyAttendance } from "@/lib/use-my-attendance";
 import { createClient } from "@/lib/supabase/client";
@@ -101,6 +102,13 @@ export default function MyPayrollPage() {
               <div className="border-t border-slate-100" />
               <Row label="실지급액" value={won(p.net)} strong />
             </Card>
+
+            <Link
+              href="/payslip"
+              className="mt-4 block w-full rounded-xl border border-slate-300 bg-white py-3 text-center text-sm font-semibold text-slate-700 transition active:scale-[0.98]"
+            >
+              📄 급여명세서 보기 / 인쇄
+            </Link>
 
             <p className="mt-3 px-1 text-center text-[11px] text-slate-400">
               실근무 기록 기반 추정치입니다. 확정 급여는 사장님 정산 후 안내됩니다.
