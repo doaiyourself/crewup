@@ -10,6 +10,7 @@ import {
 } from "@/lib/mock-data";
 import { wonShort, grossPay, shiftHours, todayLabel } from "@/lib/format";
 import { PageHeader, Card, LogoutButton } from "@/components/ui";
+import { TodayTasks } from "@/components/today-tasks";
 
 // 데모용 현재 근무 현황 (목업) — 처음 3명 근무 중, 2명 퇴근
 const WORKING_IDS = ["emp-2", "emp-4", "emp-5"];
@@ -95,6 +96,11 @@ export default function AdminDashboard() {
             value={`${done}명`}
             sub="근무 종료"
           />
+        </div>
+
+        {/* 오늘의 할일 (키오스크 연동) */}
+        <div className="mt-3">
+          <TodayTasks />
         </div>
 
         {/* 실시간 근무 현황 */}
