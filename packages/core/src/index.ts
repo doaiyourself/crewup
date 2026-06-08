@@ -24,3 +24,4 @@ export const BRAND = {
 export type StoreStatus = "pending" | "active" | "suspended";
 
 export * from "./services/attendance";
+export * from "./services/payroll";

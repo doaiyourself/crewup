@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ROLE_LABEL, isAdminRole, type Role } from "@/lib/mock-data";
 import { won } from "@/lib/format";
 import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
+import { ScheduleEditor } from "@/components/schedule-editor";
 
 interface Member {
   user_id: string;
@@ -33,6 +34,7 @@ export default function StaffPage() {
   const [filter, setFilter] = useState<"all" | Role>("all");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const [schedFor, setSchedFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!currentStoreId || currentStoreId === "demo-store") {
@@ -160,28 +162,50 @@ export default function StaffPage() {
         ) : (
           <div className="space-y-2.5">
             {list.map((m) => (
-              <Card key={m.user_id} className="flex items-center gap-3">
-                <Avatar name={m.name} color={m.avatar_color} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <p className="truncate font-semibold text-slate-900">
-                      {m.name}
+              <Card key={m.user_id}>
+                <div className="flex items-center gap-3">
+                  <Avatar name={m.name} color={m.avatar_color} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate font-semibold text-slate-900">
+                        {m.name}
+                      </p>
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                          isAdminRole(m.role)
+                            ? "bg-brand/10 text-brand"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {ROLE_LABEL[m.role]}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-slate-500">
+                      {m.position || "-"} · {won(m.hourly_wage)}/h
+                      {m.phone ? ` · ${m.phone}` : ""}
                     </p>
-                    <span
-                      className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                        isAdminRole(m.role)
-                          ? "bg-brand/10 text-brand"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {ROLE_LABEL[m.role]}
-                    </span>
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-slate-500">
-                    {m.position || "-"} · {won(m.hourly_wage)}/h
-                    {m.phone ? ` · ${m.phone}` : ""}
-                  </p>
+                  <button
+                    onClick={() =>
+                      setSchedFor((id) => (id === m.user_id ? null : m.user_id))
+                    }
+                    className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                      schedFor === m.user_id
+                        ? "bg-brand text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    스케줄
+                  </button>
                 </div>
+                {schedFor === m.user_id && currentStoreId && (
+                  <div className="mt-3 border-t border-slate-100 pt-3">
+                    <ScheduleEditor
+                      storeId={currentStoreId}
+                      userId={m.user_id}
+                    />
+                  </div>
+                )}
               </Card>
             ))}
           </div>
