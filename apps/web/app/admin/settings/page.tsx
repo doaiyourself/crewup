@@ -201,7 +201,7 @@ export default function SettingsPage() {
 
         {/* 매장 초대 코드 */}
         {currentMembership?.joinCode && (
-          <Card className="mt-3 bg-brand text-white !ring-0">
+          <Card tone="brand" className="mt-3">
             <p className="text-xs text-blue-100">매장 초대 코드</p>
             <div className="mt-1 flex items-center justify-between">
               <p className="text-2xl font-extrabold tracking-[0.25em]">

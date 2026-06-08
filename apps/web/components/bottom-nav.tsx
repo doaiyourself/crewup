@@ -26,11 +26,17 @@ export function BottomNav({ items }: { items: NavItem[] }) {
             <Link
               key={it.href}
               href={it.href}
-              className={`flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition ${
+              className={`flex flex-1 flex-col items-center gap-1 pb-2 pt-2.5 text-[11px] font-semibold transition ${
                 active ? "text-brand" : "text-slate-400"
               }`}
             >
-              <Icon name={it.icon} size={23} />
+              <span
+                className={`flex h-7 items-center justify-center rounded-full px-4 transition-colors ${
+                  active ? "bg-brand/10" : ""
+                }`}
+              >
+                <Icon name={it.icon} size={22} />
+              </span>
               {it.label}
             </Link>
           );

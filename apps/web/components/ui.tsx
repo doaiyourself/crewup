@@ -15,14 +15,14 @@ export function PageHeader({
   right?: React.ReactNode;
 }) {
   return (
-    <header className="sticky top-0 z-10 bg-brand px-5 pb-4 pt-5 text-white shadow-md">
+    <header className="sticky top-0 z-10 rounded-b-[28px] bg-gradient-to-br from-brand to-brand-dark px-5 pb-7 pt-5 text-white shadow-lg shadow-brand/20">
       <div className="mx-auto max-w-md">
         <div className="flex items-center justify-between">
           <StoreSwitcher />
           {right}
         </div>
-        <div className="mt-3">
-          <h1 className="text-xl font-bold">{title}</h1>
+        <div className="mt-3.5">
+          <h1 className="text-[22px] font-extrabold tracking-tight">{title}</h1>
           {subtitle && (
             <p className="mt-0.5 text-sm text-blue-100">{subtitle}</p>
           )}
@@ -67,12 +67,10 @@ export function Card({
 }) {
   const toneCls =
     tone === "brand"
-      ? "bg-brand text-white"
-      : "bg-white ring-1 ring-slate-100";
+      ? "bg-gradient-to-br from-brand to-brand-dark text-white shadow-md shadow-brand/20"
+      : "bg-white ring-1 ring-slate-100/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)]";
   return (
-    <div className={`rounded-2xl p-4 shadow-sm ${toneCls} ${className}`}>
-      {children}
-    </div>
+    <div className={`rounded-2xl p-4 ${toneCls} ${className}`}>{children}</div>
   );
 }
 
