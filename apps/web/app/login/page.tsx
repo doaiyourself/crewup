@@ -97,9 +97,15 @@ function LoginInner() {
               <InstallButton />
             </div>
             <p className="mt-4 text-center text-xs text-blue-100/80">
-              {isSupabaseConfigured
-                ? "로그인 시 이용약관 및 개인정보처리방침에 동의합니다."
-                : "데모 모드 · Supabase 연결 시 실제 카카오 로그인으로 전환됩니다."}
+              로그인 시{" "}
+              <Link href="/terms" className="underline">
+                이용약관
+              </Link>{" "}
+              및{" "}
+              <Link href="/privacy" className="underline">
+                개인정보처리방침
+              </Link>
+              에 동의합니다.
             </p>
           </>
         ) : (
