@@ -4,7 +4,7 @@
     {
       "name": "crewup",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": ["run", "web"],
       "port": 3001
     }
   ]

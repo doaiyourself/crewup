@@ -1,14 +1,25 @@
 # dependencies
-/node_modules
-/.pnp
+node_modules
+.pnp
 .pnp.js
 
+# turbo
+.turbo
+
 # next.js
-/.next/
-/out/
+.next/
+out/
+
+# expo / react native
+.expo/
+dist/
+*.orig.*
+web-build/
+ios/
+android/
 
 # production
-/build
+build
 
 # misc
 .DS_Store

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BRAND } from "@crewup/core";
 import { LogoMark, LogoWordmark } from "@/components/logo";
 
 export const metadata: Metadata = {
@@ -254,7 +255,7 @@ export default function AboutPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-sm text-slate-400 sm:flex-row">
           <LogoWordmark size={26} textClassName="text-slate-500" />
           <p>출근부터 급여까지, 우리 가게 크루를 한 팀으로.</p>
-          <p>© 2026 Crew Up</p>
+          <p>© 2026 {BRAND.name}</p>
         </div>
       </footer>
     </main>

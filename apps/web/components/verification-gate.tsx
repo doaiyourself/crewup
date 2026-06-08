@@ -94,8 +94,10 @@ export function VerificationGate({ children }: { children: React.ReactNode }) {
         {isOwner ? (
           <>
             <p className="mt-4 text-sm text-slate-500">
-              매장 운영을 시작하려면 국세청 사업자 정보 인증이 필요합니다.
-              사업자등록증의 정보와 동일하게 입력해 주세요.
+              매장 운영을 시작하려면 국세청 사업자 정보 인증이 필요합니다.{" "}
+              <b className="font-bold text-slate-800">
+                사업자등록증의 정보와 동일하게 입력해 주세요.
+              </b>
             </p>
             <div className="mt-4 space-y-3">
               <label className="block">

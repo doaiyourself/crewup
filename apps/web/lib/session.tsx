@@ -37,6 +37,7 @@ interface SessionValue {
   currentStoreId: string | null;
   currentMembership: Membership | null;
   ready: boolean;
+  isAuthed: boolean; // 로그인 여부 (매장 소속과 무관)
   needsOnboarding: boolean; // 로그인했지만 소속 매장 0개
   mode: "supabase" | "demo";
   login: (account: Account) => void; // 데모용
@@ -114,6 +115,7 @@ function DemoSession({ children }: { children: ReactNode }) {
         currentStoreId: base ? "demo-store" : null,
         currentMembership: memberships[0] ?? null,
         ready,
+        isAuthed: !!base,
         needsOnboarding: false,
         mode: "demo",
         login,
@@ -254,6 +256,7 @@ function SupabaseSession({ children }: { children: ReactNode }) {
         currentStoreId,
         currentMembership,
         ready,
+        isAuthed: !!userId,
         needsOnboarding: !!userId && memberships.length === 0,
         mode: "supabase",
         login: () => {},
