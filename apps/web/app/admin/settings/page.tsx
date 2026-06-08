@@ -30,11 +30,17 @@ export default function SettingsPage() {
   >([]);
   const [newLink, setNewLink] = useState("");
   const [copied, setCopied] = useState(false);
+  // 매장 정보 수정
+  const [editStore, setEditStore] = useState(false);
+  const [storeName, setStoreName] = useState("");
+  const [storeAddr, setStoreAddr] = useState("");
+  const [bizNo, setBizNo] = useState("");
+  const [savingStore, setSavingStore] = useState(false);
 
   const loadKiosk = async () => {
     if (!currentStoreId || currentStoreId === "demo-store") return;
     const supabase = createClient();
-    const [{ data: pin }, { data: devs }] = await Promise.all([
+    const [{ data: pin }, { data: devs }, { data: store }] = await Promise.all([
       supabase.rpc("has_kiosk_pin", { p_store_id: currentStoreId }),
       supabase
         .from("kiosk_devices")
@@ -42,9 +48,31 @@ export default function SettingsPage() {
         .eq("store_id", currentStoreId)
         .eq("revoked", false)
         .order("created_at"),
+      supabase
+        .from("stores")
+        .select("name, address, biz_no")
+        .eq("id", currentStoreId)
+        .maybeSingle(),
     ]);
     setHasPin(pin === true);
     setDevices(devs ?? []);
+    if (store) {
+      setStoreName(store.name ?? "");
+      setStoreAddr(store.address ?? "");
+      setBizNo(store.biz_no ?? "");
+    }
+  };
+
+  const saveStore = async () => {
+    if (!currentStoreId || !storeName.trim()) return;
+    setSavingStore(true);
+    const supabase = createClient();
+    await supabase
+      .from("stores")
+      .update({ name: storeName.trim(), address: storeAddr.trim() || null })
+      .eq("id", currentStoreId);
+    setSavingStore(false);
+    setEditStore(false);
   };
 
   useEffect(() => {
@@ -104,13 +132,70 @@ export default function SettingsPage() {
       <div className="px-4 pt-4">
         {/* 매장 정보 */}
         <Card>
-          <p className="text-base font-bold text-slate-900">
-            {currentMembership?.storeName ?? "매장"}
-          </p>
-          {account && (
-            <p className="mt-1 text-xs text-brand">
-              로그인: {account.name} ({ROLE_LABEL[account.role]})
-            </p>
+          {editStore ? (
+            <div className="space-y-2">
+              <label className="block">
+                <span className="mb-0.5 block text-[11px] font-semibold text-slate-500">
+                  매장 이름
+                </span>
+                <input
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-0.5 block text-[11px] font-semibold text-slate-500">
+                  매장 주소
+                </span>
+                <input
+                  value={storeAddr}
+                  onChange={(e) => setStoreAddr(e.target.value)}
+                  placeholder="서울특별시 강남구 …"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+              </label>
+              <p className="text-[11px] text-slate-400">
+                사업자번호 {bizNo || "-"} (인증 정보라 변경 불가)
+              </p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={saveStore}
+                  disabled={savingStore}
+                  className="flex-1 rounded-lg bg-brand py-2 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {savingStore ? "저장 중…" : "저장"}
+                </button>
+                <button
+                  onClick={() => setEditStore(false)}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-400"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-base font-bold text-slate-900">
+                  {storeName || currentMembership?.storeName || "매장"}
+                </p>
+                {storeAddr && (
+                  <p className="mt-0.5 text-xs text-slate-500">{storeAddr}</p>
+                )}
+                {account && (
+                  <p className="mt-1 text-xs text-brand">
+                    로그인: {account.name} ({ROLE_LABEL[account.role]})
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setEditStore(true)}
+                className="shrink-0 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"
+              >
+                정보 수정
+              </button>
+            </div>
           )}
         </Card>
 
@@ -239,7 +324,6 @@ export default function SettingsPage() {
 
         <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">매장 관리</h2>
         <Card className="!p-0 divide-y divide-slate-100">
-          <MenuRow icon="🏪" label="매장 정보 수정" desc="상호·주소·사업자번호" />
           <MenuRow icon="📍" label="출퇴근 위치 설정" desc="GPS 반경, QR/PIN 방식" />
           <MenuRow icon="🗓" label="스케줄 편성" desc="주간 근무표 관리" />
           <MenuRow icon="📄" label="근로계약서 발행" desc="표준계약서 템플릿" />

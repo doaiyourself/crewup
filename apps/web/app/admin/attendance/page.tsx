@@ -43,10 +43,23 @@ function timeToIso(workDate: string, hhmm: string): string | null {
   if (!hhmm) return null;
   return new Date(`${workDate}T${hhmm}:00`).toISOString();
 }
+function todMin(iso: string | null): number | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.getHours() * 60 + d.getMinutes();
+}
+function hmMin(hm: string): number {
+  const [h, m] = hm.split(":").map(Number);
+  return h * 60 + m;
+}
+const GRACE = 5; // 분
 
 export default function AdminAttendancePage() {
   const { currentStoreId, account } = useSession();
   const [rows, setRows] = useState<Row[]>([]);
+  const [sched, setSched] = useState<Map<string, { start: string; end: string }>>(
+    new Map()
+  );
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ in: string; out: string; status: string }>({
@@ -62,23 +75,36 @@ export default function AdminAttendancePage() {
     }
     const supabase = createClient();
     const since = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
-    const [{ data: members }, { data: att }] = await Promise.all([
-      supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
-      supabase
-        .from("attendance")
-        .select(
-          "id, user_id, work_date, clock_in_at, clock_out_at, status, approved_by"
-        )
-        .eq("store_id", currentStoreId)
-        .gte("work_date", since)
-        .order("work_date", { ascending: false }),
-    ]);
+    const [{ data: members }, { data: att }, { data: schedules }] =
+      await Promise.all([
+        supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
+        supabase
+          .from("attendance")
+          .select(
+            "id, user_id, work_date, clock_in_at, clock_out_at, status, approved_by"
+          )
+          .eq("store_id", currentStoreId)
+          .gte("work_date", since)
+          .order("work_date", { ascending: false }),
+        supabase
+          .from("schedules")
+          .select("user_id, day_of_week, start_time, end_time")
+          .eq("store_id", currentStoreId),
+      ]);
     const nameMap = new Map(
       ((members as any[]) ?? []).map((m) => [
         m.user_id,
         { name: m.name, color: m.avatar_color },
       ])
     );
+    const sMap = new Map<string, { start: string; end: string }>();
+    ((schedules as any[]) ?? []).forEach((s) =>
+      sMap.set(`${s.user_id}-${s.day_of_week}`, {
+        start: s.start_time.slice(0, 5),
+        end: s.end_time.slice(0, 5),
+      })
+    );
+    setSched(sMap);
     setRows(
       ((att as any[]) ?? []).map((r) => ({
         ...r,
@@ -93,12 +119,31 @@ export default function AdminAttendancePage() {
     load();
   }, [load]);
 
+  // 스케줄 대비 자동 판정 (지각/조퇴)
+  const verdict = (r: Row): { status: string; label: string } | null => {
+    const dow = new Date(`${r.work_date}T00:00:00`).getDay();
+    const shift = sched.get(`${r.user_id}-${dow}`);
+    if (!shift) return null;
+    const inMin = todMin(r.clock_in_at);
+    const outMin = todMin(r.clock_out_at);
+    if (inMin == null) return { status: "absent", label: "결근(기록 없음)" };
+    const late = inMin - hmMin(shift.start);
+    if (late > GRACE) return { status: "late", label: `지각 ${late}분` };
+    if (outMin != null) {
+      const early = hmMin(shift.end) - outMin;
+      if (early > GRACE) return { status: "early_leave", label: `조퇴 ${early}분` };
+    }
+    return { status: "normal", label: "정상" };
+  };
+
   const startEdit = (r: Row) => {
     setEditing(r.id);
+    const v = verdict(r);
     setDraft({
       in: toTimeInput(r.clock_in_at),
       out: toTimeInput(r.clock_out_at),
-      status: r.status,
+      // 미정정(normal) 상태면 자동 판정값을 미리 채움
+      status: r.status === "normal" && v ? v.status : r.status,
     });
   };
 
@@ -166,6 +211,15 @@ export default function AdminAttendancePage() {
                       출근 {toTimeInput(r.clock_in_at) || "--:--"} · 퇴근{" "}
                       {toTimeInput(r.clock_out_at) || "--:--"}
                     </p>
+                    {(() => {
+                      const v = verdict(r);
+                      if (!v || v.status === "normal") return null;
+                      return (
+                        <p className="mt-0.5 text-[11px] font-semibold text-amber-600">
+                          🤖 자동 판정: {v.label} (스케줄 대비)
+                        </p>
+                      );
+                    })()}
                   </div>
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${

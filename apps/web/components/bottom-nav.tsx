@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Icon, type IconName } from "@/components/icons";
 
 export interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  icon: IconName;
 }
 
 export function BottomNav({ items }: { items: NavItem[] }) {
@@ -25,11 +26,11 @@ export function BottomNav({ items }: { items: NavItem[] }) {
             <Link
               key={it.href}
               href={it.href}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${
+              className={`flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition ${
                 active ? "text-brand" : "text-slate-400"
               }`}
             >
-              <span className="text-xl leading-none">{it.icon}</span>
+              <Icon name={it.icon} size={23} />
               {it.label}
             </Link>
           );

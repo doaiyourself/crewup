@@ -8,6 +8,7 @@ import { ROLE_LABEL } from "@/lib/mock-data";
 import { wonShort, todayLabel } from "@/lib/format";
 import { PageHeader, Card, LogoutButton, Avatar } from "@/components/ui";
 import { TodayTasks } from "@/components/today-tasks";
+import { Icon, type IconName } from "@/components/icons";
 
 function hhmm(iso: string | null): string {
   if (!iso) return "--:--";
@@ -15,6 +16,27 @@ function hhmm(iso: string | null): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(
     d.getMinutes()
   ).padStart(2, "0")}`;
+}
+
+function QuickMenu({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: IconName;
+  label: string;
+}) {
+  return (
+    <Link href={href}>
+      <Card className="flex flex-col items-center gap-1.5 py-4 text-center">
+        <span className="text-brand">
+          <Icon name={icon} size={26} />
+        </span>
+        <p className="text-sm font-semibold text-slate-700">{label}</p>
+      </Card>
+    </Link>
+  );
 }
 
 function StatCard({
@@ -156,20 +178,17 @@ export default function AdminDashboard() {
         <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-500">
           빠른 메뉴
         </h2>
-        <div className="grid grid-cols-2 gap-3 pb-2">
-          <Link href="/admin/staff">
-            <Card className="text-center">👥<p className="mt-1 text-sm font-semibold text-slate-700">직원 관리</p></Card>
-          </Link>
-          <Link href="/admin/attendance">
-            <Card className="text-center">✅<p className="mt-1 text-sm font-semibold text-slate-700">출퇴근 승인</p></Card>
-          </Link>
-          <Link href="/admin/payroll">
-            <Card className="text-center">💰<p className="mt-1 text-sm font-semibold text-slate-700">급여 산정</p></Card>
-          </Link>
-          <Link href="/admin/settings">
-            <Card className="text-center">⚙️<p className="mt-1 text-sm font-semibold text-slate-700">매장 설정</p></Card>
-          </Link>
+        <div className="grid grid-cols-2 gap-3">
+          <QuickMenu href="/admin/staff" icon="staff" label="직원 관리" />
+          <QuickMenu href="/admin/attendance" icon="attendance" label="출퇴근 승인" />
+          <QuickMenu href="/admin/payroll" icon="payroll" label="급여 산정" />
+          <QuickMenu href="/admin/report" icon="dashboard" label="통계 리포트" />
         </div>
+        <Link href="/admin/settings" className="mt-3 block pb-2">
+          <Card className="flex items-center justify-center gap-2 text-sm font-semibold text-slate-700">
+            <Icon name="settings" size={18} /> 매장 설정
+          </Card>
+        </Link>
       </div>
     </>
   );

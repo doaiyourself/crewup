@@ -3,11 +3,11 @@ import { BottomNav, type NavItem } from "@/components/bottom-nav";
 import { VerificationGate } from "@/components/verification-gate";
 
 const NAV: NavItem[] = [
-  { href: "/admin", label: "대시보드", icon: "📊" },
-  { href: "/admin/staff", label: "직원", icon: "👥" },
-  { href: "/admin/attendance", label: "출퇴근", icon: "✅" },
-  { href: "/admin/payroll", label: "급여", icon: "💰" },
-  { href: "/admin/settings", label: "설정", icon: "⚙️" },
+  { href: "/admin", label: "대시보드", icon: "dashboard" },
+  { href: "/admin/staff", label: "직원", icon: "staff" },
+  { href: "/admin/attendance", label: "출퇴근", icon: "attendance" },
+  { href: "/admin/payroll", label: "급여", icon: "payroll" },
+  { href: "/admin/settings", label: "설정", icon: "settings" },
 ];
 
 export default function AdminLayout({

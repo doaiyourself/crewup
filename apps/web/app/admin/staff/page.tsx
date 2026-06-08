@@ -8,6 +8,7 @@ import { won } from "@/lib/format";
 import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
 import { ScheduleEditor } from "@/components/schedule-editor";
 import { ContractManager } from "@/components/contract-manager";
+import { MemberEditor } from "@/components/member-editor";
 
 interface Member {
   user_id: string;
@@ -29,7 +30,7 @@ const FILTERS: { key: "all" | Role; label: string }[] = [
 ];
 
 export default function StaffPage() {
-  const { currentStoreId, currentMembership } = useSession();
+  const { currentStoreId, currentMembership, account } = useSession();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | Role>("all");
@@ -37,6 +38,7 @@ export default function StaffPage() {
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [schedFor, setSchedFor] = useState<string | null>(null);
   const [contractFor, setContractFor] = useState<string | null>(null);
+  const [editFor, setEditFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!currentStoreId || currentStoreId === "demo-store") {
@@ -72,13 +74,15 @@ export default function StaffPage() {
     }
   };
 
-  const list = members.filter((m) => filter === "all" || m.role === filter);
+  const active = members.filter((m) => m.status === "active");
+  const list = active.filter((m) => filter === "all" || m.role === filter);
+  const isOwner = account?.role === "owner";
 
   return (
     <>
       <PageHeader
         title="직원 관리"
-        subtitle={`총 ${members.length}명`}
+        subtitle={`총 ${active.length}명`}
         right={<LogoutButton />}
       />
 
@@ -187,10 +191,11 @@ export default function StaffPage() {
                       {m.phone ? ` · ${m.phone}` : ""}
                     </p>
                   </div>
-                  <div className="flex shrink-0 flex-col gap-1">
+                  <div className="grid shrink-0 grid-cols-1 gap-1">
                     <button
                       onClick={() => {
                         setContractFor(null);
+                        setEditFor(null);
                         setSchedFor((id) => (id === m.user_id ? null : m.user_id));
                       }}
                       className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
@@ -204,6 +209,7 @@ export default function StaffPage() {
                     <button
                       onClick={() => {
                         setSchedFor(null);
+                        setEditFor(null);
                         setContractFor((id) =>
                           id === m.user_id ? null : m.user_id
                         );
@@ -215,6 +221,20 @@ export default function StaffPage() {
                       }`}
                     >
                       계약서
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSchedFor(null);
+                        setContractFor(null);
+                        setEditFor((id) => (id === m.user_id ? null : m.user_id));
+                      }}
+                      className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                        editFor === m.user_id
+                          ? "bg-brand text-white"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      관리
                     </button>
                   </div>
                 </div>
@@ -232,6 +252,19 @@ export default function StaffPage() {
                       defaultWage={m.hourly_wage}
                       workplace={currentMembership?.storeName ?? ""}
                       employerName={currentMembership?.storeName ?? "사업주"}
+                    />
+                  </div>
+                )}
+                {editFor === m.user_id && currentStoreId && (
+                  <div className="mt-3 border-t border-slate-100 pt-3">
+                    <MemberEditor
+                      storeId={currentStoreId}
+                      userId={m.user_id}
+                      initialRole={m.role}
+                      initialWage={m.hourly_wage}
+                      initialPosition={m.position ?? ""}
+                      canChangeRole={isOwner}
+                      onSaved={load}
                     />
                   </div>
                 )}
