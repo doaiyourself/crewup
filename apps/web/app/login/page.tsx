@@ -60,10 +60,10 @@ function LoginInner() {
     <main className="flex min-h-screen flex-col items-center justify-between bg-gradient-to-b from-brand to-brand-dark px-6 py-14 text-white">
       {/* 로고/브랜드 */}
       <div className="flex flex-1 flex-col items-center justify-center text-center">
-        <div className="rounded-3xl bg-white/15 p-4 shadow-lg backdrop-blur">
-          <LogoMark size={64} variant="white" />
+        <div className="rounded-[2rem] bg-white/15 p-5 shadow-lg backdrop-blur">
+          <LogoMark size={104} variant="white" />
         </div>
-        <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Crew Up</h1>
+        <h1 className="mt-6 text-4xl font-extrabold tracking-tight">Crew Up</h1>
         <p className="mt-2 text-sm text-blue-100">
           알바 출퇴근 · 근로계약 · 급여 관리
         </p>
