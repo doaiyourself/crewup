@@ -29,11 +29,15 @@ export function LogoMark({
   variant?: MarkVariant;
   className?: string;
 }) {
+  // icon: 파란 사각형 포함 → 전체 1024 viewBox (마스터와 동일 비율)
+  // mark/white: 사각형 없이 마크만 → 마크 bbox에 꽉 맞춘 정사각 viewBox로 크롭
+  //   (마크 bbox x:224~800, y:288~810, 중심 512/549, 한 변 576 + 여백)
+  const viewBox = variant === "icon" ? "0 0 1024 1024" : "176 213 672 672";
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 1024 1024"
+      viewBox={viewBox}
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="Crew Up 로고"
