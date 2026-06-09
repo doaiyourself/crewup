@@ -60,10 +60,11 @@ export default function StaffPage() {
   }, [load]);
 
   const joinCode = currentMembership?.joinCode ?? "";
-  const inviteLink =
-    typeof window !== "undefined" && joinCode
-      ? `${window.location.origin}/join?code=${joinCode}`
-      : "";
+  // 공유 링크는 항상 대표 도메인(crewup.kr)으로 — www/vercel 주소 노출 방지
+  const siteBase =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const inviteLink = joinCode ? `${siteBase}/join?code=${joinCode}` : "";
 
   const copy = async (text: string, which: "code" | "link") => {
     try {
