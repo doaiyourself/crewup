@@ -155,19 +155,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 배경 — 왜 크루업인가 */}
-      <section className="mx-auto max-w-3xl px-5 py-16 text-center">
-        <h2 className="text-2xl font-extrabold sm:text-3xl">
-          크루몬의 빈자리를 채웁니다
-        </h2>
-        <p className="mt-4 text-base leading-relaxed text-slate-500">
-          알바생의 출퇴근·근로계약·급여를 관리하던 ‘크루몬’ 서비스가 종료되며,
-          많은 사장님이 대체 도구를 찾고 있습니다. 크루업은 그 핵심 기능을
-          동등 이상으로 잇고, 모바일에서 더 빠르고 명확하게 쓸 수 있도록
-          새로 만든 매장 관리 파트너입니다.
-        </p>
-      </section>
-
       {/* 핵심 기능 */}
       <section id="features" className="bg-slate-50/60 py-16">
         <div className="mx-auto max-w-6xl px-5">
