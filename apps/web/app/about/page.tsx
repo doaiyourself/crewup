@@ -155,6 +155,91 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* 스포트라이트 — 할일 관리 */}
+      <section className="mx-auto max-w-6xl px-5 py-16">
+        <div className="grid items-center gap-10 md:grid-cols-2">
+          <div>
+            <p className="text-sm font-bold text-brand">할일 관리</p>
+            <h2 className="mt-2 text-2xl font-extrabold sm:text-3xl">
+              공유하고, 체크하면,
+              <br />
+              누가 언제 했는지 남습니다
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-slate-500">
+              오늘의 할일을 매장에 공유해 보세요. 출근한 크루가 직접 체크하면
+              완료 처리되고, <strong className="font-bold text-crew-dark">누가 · 언제</strong>{" "}
+              실행했는지 기록으로 남습니다. 매번 묻고 확인하지 않아도 매장이
+              알아서 굴러갑니다.
+            </p>
+            <ul className="mt-5 space-y-2.5 text-sm text-slate-600">
+              <li className="flex items-start gap-2">
+                <span className="text-brand">①</span>
+                <span>사장님·점장이 할일을 등록하고 매장에 공유</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-brand">②</span>
+                <span>실행한 크루가 탭 한 번으로 완료 체크</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-brand">③</span>
+                <span>완료자 이름과 시각이 자동 기록 — 책임이 명확하게</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* 미니 목업 — 체크리스트 */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-sm rounded-3xl border border-slate-100 bg-white p-5 shadow-xl">
+              <div className="flex items-center justify-between">
+                <p className="font-bold text-crew-dark">오늘의 할일</p>
+                <span className="rounded-full bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
+                  2 / 3 완료
+                </span>
+              </div>
+              <ul className="mt-4 space-y-2.5">
+                <li className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+                    ✓
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold text-slate-700 line-through decoration-slate-300">
+                      오픈 청소
+                    </span>
+                    <span className="block text-xs text-slate-400">
+                      민지 · 오전 9:02 완료
+                    </span>
+                  </span>
+                </li>
+                <li className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+                    ✓
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold text-slate-700 line-through decoration-slate-300">
+                      재고 확인
+                    </span>
+                    <span className="block text-xs text-slate-400">
+                      준호 · 오전 10:15 완료
+                    </span>
+                  </span>
+                </li>
+                <li className="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 p-3">
+                  <span className="h-6 w-6 rounded-full border-2 border-slate-300" />
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold text-slate-500">
+                      마감 정산
+                    </span>
+                    <span className="block text-xs text-slate-400">
+                      아직 미완료
+                    </span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 핵심 기능 */}
       <section id="features" className="bg-slate-50/60 py-16">
         <div className="mx-auto max-w-6xl px-5">
@@ -184,6 +269,11 @@ export default function AboutPage() {
               icon="📅"
               title="스케줄 관리"
               desc="주간 근무표를 손쉽게 편성하고, 충돌·초과근무를 미리 경고합니다."
+            />
+            <FeatureCard
+              icon="✅"
+              title="할일 관리"
+              desc="할일을 매장에 공유하면 실행한 크루가 체크. 누가 언제 완료했는지 기록으로 남습니다."
             />
             <FeatureCard
               icon="📊"
