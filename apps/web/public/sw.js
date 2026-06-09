@@ -1,6 +1,7 @@
-// Crew Up 서비스 워커 — 설치 가능 + 앱 셸 오프라인(동일 출처만).
-// 인증/데이터(Supabase 등 외부 출처)는 캐시하지 않음.
-const CACHE = "crewup-v1";
+// Crew Up 서비스 워커 (동일 출처만). 외부(Supabase 등)는 패스.
+// 문서(HTML)는 항상 네트워크 → 배포 후 구버전 페이지가 캐시로 남지 않음.
+// 정적 해시 자산만 캐시(셸).
+const CACHE = "crewup-v2";
 
 self.addEventListener("install", () => self.skipWaiting());
 
@@ -19,16 +20,24 @@ self.addEventListener("fetch", (e) => {
   const { request } = e;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return; // 외부(API 등)는 패스
+  if (url.origin !== self.location.origin) return;
 
-  // 네트워크 우선, 실패 시 캐시 (오프라인 셸)
+  // HTML 문서 / 네비게이션: 항상 네트워크 (최신 페이지 보장)
+  if (request.mode === "navigate") {
+    e.respondWith(fetch(request).catch(() => caches.match(request)));
+    return;
+  }
+
+  // 정적 자산(해시 파일): 캐시 우선, 없으면 네트워크 후 캐시
   e.respondWith(
-    fetch(request)
-      .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
-        return res;
-      })
-      .catch(() => caches.match(request))
+    caches.match(request).then(
+      (cached) =>
+        cached ||
+        fetch(request).then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+          return res;
+        })
+    )
   );
 });
