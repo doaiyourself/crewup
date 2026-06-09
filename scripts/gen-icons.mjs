@@ -7,12 +7,12 @@ mkdirSync(OUT, { recursive: true });
 
 const marks = (color) => `
   <g fill="${color}">
-    <circle cx="285" cy="555" r="70"/>
-    <circle cx="512" cy="440" r="70"/>
-    <circle cx="739" cy="325" r="70"/>
-    <rect x="215" y="660" width="140" height="155" rx="70"/>
-    <rect x="442" y="545" width="140" height="270" rx="70"/>
-    <rect x="669" y="430" width="140" height="385" rx="70"/>
+    <circle cx="288" cy="565" r="64"/>
+    <circle cx="512" cy="459" r="64"/>
+    <circle cx="736" cy="352" r="64"/>
+    <rect x="224" y="653" width="128" height="157" rx="64"/>
+    <rect x="448" y="544" width="128" height="266" rx="64"/>
+    <rect x="672" y="438" width="128" height="372" rx="64"/>
   </g>`;
 
 // 둥근 사각 아이콘 (일반/애플)

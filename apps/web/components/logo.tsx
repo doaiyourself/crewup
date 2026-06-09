@@ -8,14 +8,14 @@ type MarkVariant = "icon" | "mark" | "white";
 function Marks({ color }: { color: string }) {
   return (
     <g fill={color}>
-      {/* 머리 (원) — 세 명 동일 크기, 왼→오 상승 */}
-      <circle cx="285" cy="555" r="70" />
-      <circle cx="512" cy="440" r="70" />
-      <circle cx="739" cy="325" r="70" />
-      {/* 몸통 (pill) — 동일 너비, 바닥선 y=815 공유, 오른쪽일수록 길어짐 */}
-      <rect x="215" y="660" width="140" height="155" rx="70" />
-      <rect x="442" y="545" width="140" height="270" rx="70" />
-      <rect x="669" y="430" width="140" height="385" rx="70" />
+      {/* 머리 (원) — 마스터 로고 좌표(픽셀 추출), r=64, 왼→오 상승 */}
+      <circle cx="288" cy="565" r="64" />
+      <circle cx="512" cy="459" r="64" />
+      <circle cx="736" cy="352" r="64" />
+      {/* 몸통 (pill) — 너비 128, 바닥선 y=810 공유 */}
+      <rect x="224" y="653" width="128" height="157" rx="64" />
+      <rect x="448" y="544" width="128" height="266" rx="64" />
+      <rect x="672" y="438" width="128" height="372" rx="64" />
     </g>
   );
 }
