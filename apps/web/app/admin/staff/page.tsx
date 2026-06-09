@@ -9,6 +9,7 @@ import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
 import { ScheduleEditor } from "@/components/schedule-editor";
 import { ContractManager } from "@/components/contract-manager";
 import { MemberEditor } from "@/components/member-editor";
+import { KakaoShareButton } from "@/components/kakao-share";
 
 interface Member {
   user_id: string;
@@ -126,6 +127,14 @@ export default function StaffPage() {
                 </button>
               </div>
             </div>
+            {inviteLink && (
+              <KakaoShareButton
+                title={`${currentMembership?.storeName ?? "매장"} 합류 초대`}
+                description="Crew Up에서 출퇴근·급여를 관리해요. 눌러서 합류하기"
+                link={inviteLink}
+                label="카카오톡으로 초대하기"
+              />
+            )}
             <p className="text-[11px] leading-relaxed text-slate-400">
               직원·알바에게 코드나 링크를 공유하세요. 링크를 열면 카카오 로그인
               후 자동으로 매장에 합류합니다.
