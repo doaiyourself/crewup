@@ -34,19 +34,29 @@ export function MemberEditor({
   const [position, setPosition] = useState(initialPosition);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
   const isOwnerMember = initialRole === "owner";
+  const targetIsAdmin = initialRole === "owner" || initialRole === "manager";
+  // 관리자(사장/점장) 계정은 사장님만 관리 가능 (백엔드 트리거와 일치).
+  // canChangeRole=true 는 현재 로그인이 사장님일 때만 전달된다.
+  const locked = !canChangeRole && targetIsAdmin;
 
   const save = async () => {
     setSaving(true);
+    setError("");
     const supabase = createClient();
     const patch: any = { hourly_wage: wage, position: position.trim() };
     if (canChangeRole && !isOwnerMember) patch.role = role;
-    await supabase
+    const { error: e } = await supabase
       .from("memberships")
       .update(patch)
       .eq("store_id", storeId)
       .eq("user_id", userId);
     setSaving(false);
+    if (e) {
+      setError("저장하지 못했어요. 권한을 확인해 주세요.");
+      return;
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
     onSaved();
@@ -55,14 +65,27 @@ export function MemberEditor({
   const resign = async () => {
     if (!confirm("이 직원을 퇴사 처리할까요? 매장 접근이 즉시 중단됩니다."))
       return;
+    setError("");
     const supabase = createClient();
-    await supabase
+    const { error: e } = await supabase
       .from("memberships")
       .update({ status: "resigned" })
       .eq("store_id", storeId)
       .eq("user_id", userId);
+    if (e) {
+      setError("퇴사 처리에 실패했어요. 권한을 확인해 주세요.");
+      return;
+    }
     onSaved();
   };
+
+  if (locked) {
+    return (
+      <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
+        관리자(사장님·점장) 계정은 <b>사장님만</b> 관리할 수 있어요.
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-2.5 text-sm">
@@ -118,6 +141,12 @@ export function MemberEditor({
           />
         </label>
       </div>
+
+      {error && (
+        <p className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-500">
+          {error}
+        </p>
+      )}
 
       <div className="flex gap-2 pt-1">
         <button

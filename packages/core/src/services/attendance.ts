@@ -50,6 +50,9 @@ export function createAttendanceService(supabase: SupabaseLike) {
     };
   }
 
+  // ⚠️ 직접 기록(clockIn/clockOut)은 RLS(0008)로 차단됩니다.
+  //    GPS/QR 검증을 강제하려면 클라이언트는 서버 라우트(/api/clock)를 호출해야 합니다.
+  //    아래 함수는 service_role 컨텍스트(서버)에서만 동작합니다.
   async function clockIn(storeId: string) {
     const {
       data: { user },
