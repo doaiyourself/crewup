@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/session";
-import { useAdminStats } from "@/lib/use-admin-stats";
+import { useAdminStats, type RosterStatus } from "@/lib/use-admin-stats";
 import { ROLE_LABEL } from "@/lib/mock-data";
 import { wonShort, todayLabel } from "@/lib/format";
-import { PageHeader, Card, LogoutButton, Avatar } from "@/components/ui";
+import { Card, Avatar, LogoutButton } from "@/components/ui";
+import { StoreSwitcher } from "@/components/store-switcher";
 import { TodayTasks } from "@/components/today-tasks";
 import { Icon, type IconName } from "@/components/icons";
 
@@ -18,7 +19,50 @@ function hhmm(iso: string | null): string {
   ).padStart(2, "0")}`;
 }
 
-function QuickMenu({
+// 가로 스크롤 요약 카드
+function SummaryCard({
+  icon,
+  label,
+  value,
+  unit,
+  tint,
+}: {
+  icon: IconName;
+  label: string;
+  value: string;
+  unit?: string;
+  tint: string;
+}) {
+  return (
+    <div className="flex min-w-[44%] flex-1 snap-start flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.05)] ring-1 ring-slate-100/80">
+      <span
+        className="flex h-9 w-9 items-center justify-center rounded-xl"
+        style={{ backgroundColor: `${tint}1a`, color: tint }}
+      >
+        <Icon name={icon} size={20} />
+      </span>
+      <div>
+        <p className="text-xs text-slate-400">{label}</p>
+        <p className="mt-0.5 text-xl font-extrabold text-slate-900">
+          {value}
+          {unit && (
+            <span className="ml-1 text-xs font-semibold text-slate-400">
+              {unit}
+            </span>
+          )}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+const STATUS_STYLE: Record<RosterStatus, { label: string; cls: string }> = {
+  working: { label: "근무중", cls: "bg-green-100 text-green-700" },
+  done: { label: "퇴근", cls: "bg-slate-100 text-slate-500" },
+  scheduled: { label: "출근전", cls: "bg-slate-100 text-slate-400" },
+};
+
+function QuickIcon({
   href,
   icon,
   label,
@@ -28,40 +72,15 @@ function QuickMenu({
   label: string;
 }) {
   return (
-    <Link href={href}>
-      <Card className="flex flex-col items-center gap-1.5 py-4 text-center">
-        <span className="text-brand">
-          <Icon name={icon} size={26} />
-        </span>
-        <p className="text-sm font-semibold text-slate-700">{label}</p>
-      </Card>
+    <Link
+      href={href}
+      className="flex flex-col items-center gap-1.5 rounded-2xl bg-white py-3.5 shadow-[0_1px_3px_rgba(15,23,42,0.05)] ring-1 ring-slate-100/80 transition active:scale-[0.97]"
+    >
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand">
+        <Icon name={icon} size={20} />
+      </span>
+      <span className="text-xs font-semibold text-slate-600">{label}</span>
     </Link>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  sub,
-  accent,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  accent?: boolean;
-}) {
-  return (
-    <Card tone={accent ? "brand" : "default"}>
-      <p className={`text-xs ${accent ? "text-blue-100" : "text-slate-500"}`}>
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-extrabold">{value}</p>
-      {sub && (
-        <p className={`mt-0.5 text-xs ${accent ? "text-blue-100" : "text-slate-400"}`}>
-          {sub}
-        </p>
-      )}
-    </Card>
   );
 }
 
@@ -71,124 +90,117 @@ export default function AdminDashboard() {
   const [today, setToday] = useState("");
   useEffect(() => setToday(todayLabel()), []);
 
-  const maxHours = Math.max(...stats.weekTop.map((r) => r.hours), 1);
-
   return (
     <>
-      <PageHeader
-        title="관리 대시보드"
-        subtitle={today}
-        right={<LogoutButton />}
-      />
+      {/* 가벼운 헤더 (흰 칩 + 로그아웃) */}
+      <header className="sticky top-0 z-10 bg-slate-100/90 px-4 pb-2 pt-4 backdrop-blur">
+        <div className="flex items-center justify-between">
+          <StoreSwitcher light />
+          <LogoutButton light />
+        </div>
+      </header>
 
-      <div className="px-4 pt-4">
-        {/* 핵심 지표 */}
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard
-            label="현재 근무 중"
-            value={`${stats.working}명`}
-            sub={`전체 ${stats.total}명`}
-            accent
-          />
-          <StatCard
-            label="오늘 출근율"
-            value={`${stats.attendedRate}%`}
-            sub={`${stats.working + stats.done}/${stats.total}명 출근`}
-          />
-          <StatCard
+      <div className="px-4 pb-4">
+        <p className="mb-2 px-1 text-xs font-medium text-slate-400">{today}</p>
+
+        {/* 요약 카드 — 가로 스크롤 */}
+        <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <SummaryCard
+            icon="payroll"
             label="이번 달 인건비"
             value={stats.laborCost > 0 ? wonShort(stats.laborCost) : "-"}
-            sub="실근무 기준 추정"
+            tint="#2F6BFF"
           />
-          <StatCard label="퇴근 완료" value={`${stats.done}명`} sub="근무 종료" />
+          <SummaryCard
+            icon="staff"
+            label="현재 근무자"
+            value={`${stats.working}`}
+            unit={`/ ${stats.total}명`}
+            tint="#16a34a"
+          />
+          <SummaryCard
+            icon="attendance"
+            label="오늘 출근율"
+            value={`${stats.attendedRate}%`}
+            tint="#f59e0b"
+          />
         </div>
 
-        {/* 오늘의 할일 */}
-        <div className="mt-3">
-          <TodayTasks />
-        </div>
-
-        {/* 실시간 근무 현황 */}
-        <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-500">
-          실시간 근무 현황
+        {/* 오늘 근무자 */}
+        <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-700">
+          오늘 근무자
         </h2>
         <Card className="!p-0">
           {stats.loading ? (
-            <p className="px-4 py-6 text-center text-sm text-slate-400">
+            <p className="px-4 py-8 text-center text-sm text-slate-400">
               불러오는 중…
             </p>
-          ) : stats.realtime.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-slate-400">
-              현재 근무 중인 직원이 없습니다.
+          ) : stats.roster.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-slate-400">
+              오늘 근무 예정자가 없어요.
             </p>
           ) : (
             <div className="divide-y divide-slate-100">
-              {stats.realtime.map((e) => (
-                <div key={e.user_id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
-                  </span>
-                  <span className="flex-1 text-sm font-medium text-slate-800">
-                    {e.name}
-                    <span className="ml-2 text-xs text-slate-400">
-                      {ROLE_LABEL[e.role]}
-                      {e.position ? ` · ${e.position}` : ""}
-                    </span>
-                  </span>
-                  <span className="text-xs text-slate-400">
-                    {hhmm(e.clock_in_at)} 출근
-                  </span>
-                </div>
-              ))}
+              {stats.roster.map((r) => {
+                const s = STATUS_STYLE[r.status];
+                const time =
+                  r.start && r.end
+                    ? `${r.start}~${r.end}`
+                    : r.clock_in_at
+                    ? `${hhmm(r.clock_in_at)}~`
+                    : "시간 미정";
+                return (
+                  <div
+                    key={r.user_id}
+                    className="flex items-center gap-3 px-4 py-3"
+                  >
+                    <Avatar name={r.name} color={r.avatar_color} size={38} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${s.cls}`}
+                        >
+                          {s.label}
+                        </span>
+                        <p className="truncate font-semibold text-slate-900">
+                          {r.name}
+                        </p>
+                        <span className="text-xs text-slate-400">
+                          {ROLE_LABEL[r.role]}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-400">
+                        {time}
+                        {r.offSchedule && r.clock_in_at ? " · 변경근무" : ""}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </Card>
 
-        {/* 주간 근무시간 차트 */}
-        {stats.weekTop.length > 0 && (
-          <>
-            <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-500">
-              주간 근무시간 TOP 5
-            </h2>
-            <Card className="space-y-3">
-              {stats.weekTop.map((r) => (
-                <div key={r.name} className="flex items-center gap-3">
-                  <span className="w-12 shrink-0 text-xs font-medium text-slate-600">
-                    {r.name}
-                  </span>
-                  <div className="h-5 flex-1 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="flex h-full items-center justify-end rounded-full pr-2 text-[10px] font-bold text-white"
-                      style={{
-                        width: `${Math.max((r.hours / maxHours) * 100, 18)}%`,
-                        backgroundColor: r.color,
-                      }}
-                    >
-                      {r.hours}h
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </Card>
-          </>
-        )}
-
-        {/* 빠른 메뉴 */}
-        <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-500">
-          빠른 메뉴
+        {/* 바로가기 */}
+        <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-700">
+          바로가기
         </h2>
-        <div className="grid grid-cols-2 gap-3">
-          <QuickMenu href="/admin/staff" icon="staff" label="직원 관리" />
-          <QuickMenu href="/admin/attendance" icon="attendance" label="출퇴근 승인" />
-          <QuickMenu href="/admin/payroll" icon="payroll" label="급여 산정" />
-          <QuickMenu href="/admin/report" icon="dashboard" label="통계 리포트" />
+        <div className="grid grid-cols-4 gap-2.5">
+          <QuickIcon href="/admin/staff" icon="staff" label="직원" />
+          <QuickIcon
+            href="/admin/attendance"
+            icon="attendance"
+            label="출퇴근"
+          />
+          <QuickIcon href="/admin/payroll" icon="payroll" label="급여" />
+          <QuickIcon href="/admin/report" icon="dashboard" label="통계" />
         </div>
-        <Link href="/admin/settings" className="mt-3 block pb-2">
-          <Card className="flex items-center justify-center gap-2 text-sm font-semibold text-slate-700">
-            <Icon name="settings" size={18} /> 매장 설정
-          </Card>
-        </Link>
+
+        {/* 오늘의 할일 */}
+        <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-700">
+          오늘의 할일
+        </h2>
+        <TodayTasks />
       </div>
     </>
   );

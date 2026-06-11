@@ -81,15 +81,24 @@ export function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 // 로그아웃 버튼 (헤더 우측)
-export function LogoutButton() {
+export function LogoutButton({ light = false }: { light?: boolean }) {
   const { account, logout } = useSession();
   if (!account) return null;
   return (
     <button
       onClick={logout}
-      className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur transition active:scale-95"
+      className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ${
+        light
+          ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
+          : "bg-white/15 backdrop-blur"
+      }`}
     >
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/25 text-[11px]">
+      <span
+        className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white ${
+          light ? "" : "bg-white/25"
+        }`}
+        style={light ? { backgroundColor: account.avatarColor } : undefined}
+      >
         {account.name.charAt(0)}
       </span>
       <span>{ROLE_LABEL[account.role]}</span>

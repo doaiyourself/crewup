@@ -29,6 +29,26 @@ export interface RealtimeWorker {
   clock_in_at: string | null;
 }
 
+interface Sched {
+  user_id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+}
+
+export type RosterStatus = "working" | "done" | "scheduled";
+export interface RosterEntry {
+  user_id: string;
+  name: string;
+  avatar_color: string;
+  role: Role;
+  status: RosterStatus;
+  start: string | null; // "HH:MM"
+  end: string | null;
+  clock_in_at: string | null;
+  offSchedule: boolean; // 스케줄 없이 출근(변경근무)
+}
+
 export interface AdminStats {
   loading: boolean;
   total: number;
@@ -36,6 +56,7 @@ export interface AdminStats {
   done: number;
   attendedRate: number;
   realtime: RealtimeWorker[];
+  roster: RosterEntry[];
   laborCost: number;
   weekTop: { name: string; color: string; hours: number }[];
 }
@@ -53,6 +74,7 @@ export function useAdminStats(storeId: string | null): AdminStats {
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
   const [att, setAtt] = useState<Att[]>([]);
+  const [scheds, setScheds] = useState<Sched[]>([]);
 
   const load = useCallback(async () => {
     if (!storeId || storeId === "demo-store") {
@@ -61,16 +83,23 @@ export function useAdminStats(storeId: string | null): AdminStats {
     }
     const supabase = createClient();
     const monthStart = ymd(new Date()).slice(0, 8) + "01";
-    const [{ data: m }, { data: a }] = await Promise.all([
+    const todayDow = new Date().getDay();
+    const [{ data: m }, { data: a }, { data: s }] = await Promise.all([
       supabase.rpc("list_store_members", { p_store_id: storeId }),
       supabase
         .from("attendance")
         .select("user_id, work_date, clock_in_at, clock_out_at")
         .eq("store_id", storeId)
         .gte("work_date", monthStart),
+      supabase
+        .from("schedules")
+        .select("user_id, day_of_week, start_time, end_time")
+        .eq("store_id", storeId)
+        .eq("day_of_week", todayDow),
     ]);
     setMembers((m as Member[]) ?? []);
     setAtt((a as Att[]) ?? []);
+    setScheds((s as Sched[]) ?? []);
     setLoading(false);
   }, [storeId]);
 
@@ -116,6 +145,47 @@ export function useAdminStats(storeId: string | null): AdminStats {
     })
     .filter(Boolean) as RealtimeWorker[];
 
+  // 오늘 근무자 로스터: 오늘 스케줄 있는 사람 + 오늘 출근 기록 있는 사람
+  const hhmm = (t: string | null) => (t ? t.slice(0, 5) : null);
+  const rosterIds = new Set<string>();
+  scheds.forEach((s) => rosterIds.add(s.user_id));
+  todayRows.forEach(
+    (r) => (r.clock_in_at || r.clock_out_at) && rosterIds.add(r.user_id)
+  );
+  const statusOrder: Record<RosterStatus, number> = {
+    working: 0,
+    scheduled: 1,
+    done: 2,
+  };
+  const roster: RosterEntry[] = (Array.from(rosterIds)
+    .map((id) => {
+      const m = byUser.get(id);
+      if (!m) return null;
+      const s = scheds.find((x) => x.user_id === id);
+      const row = todayRows.find((r) => r.user_id === id);
+      const status: RosterStatus = workingIds.has(id)
+        ? "working"
+        : doneIds.has(id)
+        ? "done"
+        : "scheduled";
+      return {
+        user_id: id,
+        name: m.name,
+        avatar_color: m.avatar_color,
+        role: m.role,
+        status,
+        start: s ? hhmm(s.start_time) : null,
+        end: s ? hhmm(s.end_time) : null,
+        clock_in_at: row?.clock_in_at ?? null,
+        offSchedule: !s,
+      };
+    })
+    .filter(Boolean) as RosterEntry[]).sort(
+    (a, b) =>
+      statusOrder[a.status] - statusOrder[b.status] ||
+      (a.start ?? "99").localeCompare(b.start ?? "99")
+  );
+
   // 이번 달 인건비(예상): 완료된 근무시간 × 시급
   const laborCost = att.reduce(
     (sum, r) =>
@@ -150,6 +220,7 @@ export function useAdminStats(storeId: string | null): AdminStats {
     done,
     attendedRate,
     realtime,
+    roster,
     laborCost: Math.round(laborCost),
     weekTop,
   };

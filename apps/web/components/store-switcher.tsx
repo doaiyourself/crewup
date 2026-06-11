@@ -7,7 +7,7 @@ import { ROLE_LABEL, isAdminRole } from "@/lib/mock-data";
 
 // 헤더 좌상단 매장 전환기.
 // 현재 매장명 + 역할 칩을 보여주고, 탭하면 소속 매장 목록 + "매장 추가/합류".
-export function StoreSwitcher() {
+export function StoreSwitcher({ light = false }: { light?: boolean }) {
   const { memberships, currentMembership, switchStore } = useSession();
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -25,12 +25,20 @@ export function StoreSwitcher() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 rounded-full bg-white/15 py-1 pl-2.5 pr-2 text-xs font-semibold text-white backdrop-blur transition active:scale-95"
+        className={`flex items-center gap-1.5 rounded-full py-1.5 pl-3 pr-2.5 text-sm font-bold transition active:scale-95 ${
+          light
+            ? "bg-white text-slate-800 shadow-sm ring-1 ring-slate-200"
+            : "bg-white/15 py-1 text-xs text-white backdrop-blur"
+        }`}
       >
-        <span className="max-w-[140px] truncate">
+        <span className="max-w-[150px] truncate">
           {currentMembership.storeName}
         </span>
-        <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[10px]">
+        <span
+          className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+            light ? "bg-brand/10 text-brand" : "bg-white/25"
+          }`}
+        >
           {ROLE_LABEL[currentMembership.role]}
         </span>
         <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
