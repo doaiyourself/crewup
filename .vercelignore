@@ -1,0 +1,5 @@
+# 로컬 전용 환경변수는 배포 빌드에 올리지 않는다.
+# (올라가면 Next가 .env.local의 localhost 값으로 NEXT_PUBLIC_*를 빌드에 박아버림 →
+#  초대 링크/카카오 로그인 리다이렉트가 localhost로 깨짐. 빌드는 Vercel 대시보드 env 사용.)
+.env.local
+.env*.local
