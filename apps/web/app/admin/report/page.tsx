@@ -6,7 +6,7 @@ import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { computePayroll } from "@crewup/core";
 import { won, wonShort } from "@/lib/format";
-import { PageHeader, Card, LogoutButton, Avatar } from "@/components/ui";
+import { PageHeader, Card, AccountBadge, Avatar } from "@/components/ui";
 
 interface Member {
   user_id: string;
@@ -105,7 +105,7 @@ export default function ReportPage() {
 
   return (
     <>
-      <PageHeader title="통계 리포트" subtitle="최근 6개월" right={<LogoutButton light />} />
+      <PageHeader title="통계 리포트" subtitle="최근 6개월" right={<AccountBadge light />} />
 
       <div className="px-4 pt-4">
         {loading ? (

@@ -11,7 +11,7 @@ import {
   DAY_LABEL,
 } from "@/lib/mock-data";
 import { todayLabel, shiftHours, won, netPay } from "@/lib/format";
-import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
+import { PageHeader, Card, Avatar, AccountBadge } from "@/components/ui";
 
 function hhmm(iso: string | null): string {
   if (!iso) return "--:--";
@@ -43,7 +43,7 @@ export default function MeHome() {
 
   return (
     <>
-      <PageHeader title={`안녕하세요, ${account.name}님`} subtitle={today} right={<LogoutButton light />} />
+      <PageHeader title={`안녕하세요, ${account.name}님`} subtitle={today} right={<AccountBadge light />} />
 
       <div className="px-4">
         {/* 출퇴근 카드 */}

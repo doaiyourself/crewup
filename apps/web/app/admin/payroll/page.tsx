@@ -6,7 +6,7 @@ import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { computePayroll } from "@crewup/core";
 import { won, wonShort } from "@/lib/format";
-import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
+import { PageHeader, Card, Avatar, AccountBadge } from "@/components/ui";
 
 interface Line {
   user_id: string;
@@ -75,7 +75,7 @@ export default function AdminPayrollPage() {
 
   return (
     <>
-      <PageHeader title="급여 산정" subtitle={ymLabel()} right={<LogoutButton light />} />
+      <PageHeader title="급여 산정" subtitle={ymLabel()} right={<AccountBadge light />} />
 
       <div className="px-4 pt-4">
         {loading ? (

@@ -19,7 +19,7 @@ export function PageHeader({
       <div className="mx-auto max-w-md">
         <div className="flex items-center justify-between">
           <StoreSwitcher light />
-          {right ?? <LogoutButton light />}
+          {right ?? <AccountBadge />}
         </div>
         <div className="mt-2 flex items-baseline gap-2 px-1">
           <h1 className="text-lg font-extrabold tracking-tight text-slate-900">
@@ -105,5 +105,30 @@ export function LogoutButton({ light = false }: { light?: boolean }) {
       </span>
       <span>{ROLE_LABEL[account.role]}</span>
     </button>
+  );
+}
+
+// 헤더 우측 계정 표시 칩 (정보용, 클릭 동작 없음 — 로그아웃은 설정 하단에 있음)
+export function AccountBadge({ light = true }: { light?: boolean }) {
+  const { account } = useSession();
+  if (!account) return null;
+  return (
+    <span
+      className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${
+        light
+          ? "bg-white text-slate-600 shadow-sm ring-1 ring-slate-200"
+          : "bg-white/15 text-white backdrop-blur"
+      }`}
+    >
+      <span
+        className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white ${
+          light ? "" : "bg-white/25"
+        }`}
+        style={light ? { backgroundColor: account.avatarColor } : undefined}
+      >
+        {account.name.charAt(0)}
+      </span>
+      <span>{ROLE_LABEL[account.role]}</span>
+    </span>
   );
 }

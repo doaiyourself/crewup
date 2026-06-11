@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
-import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
+import { PageHeader, Card, Avatar, AccountBadge } from "@/components/ui";
 
 const STATUS: { key: string; label: string; cls: string }[] = [
   { key: "normal", label: "정상", cls: "text-green-600" },
@@ -176,7 +176,7 @@ export default function AdminAttendancePage() {
       <PageHeader
         title="출퇴근 승인"
         subtitle={`최근 2주 · 미승인 ${pending}건`}
-        right={<LogoutButton light />}
+        right={<AccountBadge light />}
       />
 
       <div className="px-4 pt-4">

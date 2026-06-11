@@ -7,7 +7,7 @@ import { useMyAttendance } from "@/lib/use-my-attendance";
 import { createClient } from "@/lib/supabase/client";
 import { computePayroll, type PayrollResult } from "@crewup/core";
 import { won } from "@/lib/format";
-import { PageHeader, Card, LogoutButton } from "@/components/ui";
+import { PageHeader, Card, AccountBadge } from "@/components/ui";
 
 function Row({
   label,
@@ -66,7 +66,7 @@ export default function MyPayrollPage() {
 
   return (
     <>
-      <PageHeader title="내 급여" subtitle={`${ymLabel()} 예상`} right={<LogoutButton light />} />
+      <PageHeader title="내 급여" subtitle={`${ymLabel()} 예상`} right={<AccountBadge light />} />
 
       <div className="px-4 pt-4">
         {loading || p === null ? (

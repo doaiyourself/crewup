@@ -9,7 +9,7 @@ import {
 } from "@/lib/use-my-attendance";
 import { getSchedule } from "@/lib/mock-data";
 import { todayLabel } from "@/lib/format";
-import { PageHeader, Card, LogoutButton } from "@/components/ui";
+import { PageHeader, Card, AccountBadge } from "@/components/ui";
 
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -93,7 +93,7 @@ export default function AttendancePage() {
 
   return (
     <>
-      <PageHeader title="출퇴근" subtitle={todayStr} right={<LogoutButton light />} />
+      <PageHeader title="출퇴근" subtitle={todayStr} right={<AccountBadge light />} />
 
       <div className="px-4 pt-4">
         {/* 큰 출퇴근 버튼 */}

@@ -5,7 +5,7 @@ import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { DAY_LABEL } from "@/lib/mock-data";
 import { shiftHours } from "@/lib/format";
-import { PageHeader, Card, LogoutButton } from "@/components/ui";
+import { PageHeader, Card, AccountBadge } from "@/components/ui";
 
 interface Shift {
   day_of_week: number;
@@ -47,7 +47,7 @@ export default function MySchedulePage() {
 
   return (
     <>
-      <PageHeader title="내 스케줄" subtitle="주간 근무표" right={<LogoutButton light />} />
+      <PageHeader title="내 스케줄" subtitle="주간 근무표" right={<AccountBadge light />} />
 
       <div className="px-4 pt-4">
         <Card className="mb-3 flex items-center justify-between">

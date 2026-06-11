@@ -5,7 +5,7 @@ import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { ROLE_LABEL, isAdminRole, type Role } from "@/lib/mock-data";
 import { won } from "@/lib/format";
-import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
+import { PageHeader, Card, Avatar, AccountBadge } from "@/components/ui";
 import { ScheduleEditor } from "@/components/schedule-editor";
 import { ContractManager } from "@/components/contract-manager";
 import { MemberEditor } from "@/components/member-editor";
@@ -85,7 +85,7 @@ export default function StaffPage() {
       <PageHeader
         title="직원 관리"
         subtitle={`총 ${active.length}명`}
-        right={<LogoutButton light />}
+        right={<AccountBadge light />}
       />
 
       <div className="px-4 pt-4">

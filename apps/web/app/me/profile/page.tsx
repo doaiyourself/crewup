@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ROLE_LABEL } from "@/lib/mock-data";
 import { CONTRACT_STATUS_LABEL, type ContractStatus } from "@/lib/contract";
 import { won } from "@/lib/format";
-import { PageHeader, Card, Avatar, LogoutButton } from "@/components/ui";
+import { PageHeader, Card, Avatar, AccountBadge } from "@/components/ui";
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -58,7 +58,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="내 정보" right={<LogoutButton light />} />
+      <PageHeader title="내 정보" right={<AccountBadge light />} />
 
       <div className="px-4 pt-4">
         <Card className="flex items-center gap-4">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { ROLE_LABEL } from "@/lib/mock-data";
-import { PageHeader, Card, LogoutButton } from "@/components/ui";
+import { PageHeader, Card, AccountBadge } from "@/components/ui";
 import { PinPad } from "@/components/pin-pad";
 import { AttendanceConfig } from "@/components/attendance-config";
 
@@ -128,7 +128,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="매장 설정" right={<LogoutButton light />} />
+      <PageHeader title="매장 설정" right={<AccountBadge light />} />
 
       <div className="px-4 pt-4">
         {/* 매장 정보 */}
