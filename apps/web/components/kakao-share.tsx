@@ -63,7 +63,13 @@ export function KakaoShareButton({
   }, []);
 
   const share = () => {
-    // 1) 카카오 SDK 준비됨 → 제스처 안에서 동기 호출 (iOS 차단 회피)
+    // 1) 모바일 기기 공유시트가 가장 안정적 (iOS Safari는 카카오 SDK 앱전환을 자주 차단).
+    //    카카오톡 선택 시 crewup.kr OG 태그를 긁어 카드가 자동 생성된다.
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      navigator.share({ title, text: description, url: link }).catch(() => {});
+      return;
+    }
+    // 2) 공유시트 없음(데스크톱 등) → 카카오 JS SDK 리치 카드
     if (ready && window.Kakao?.Share) {
       try {
         window.Kakao.Share.sendDefault({
@@ -83,12 +89,7 @@ export function KakaoShareButton({
         /* 폴백으로 진행 */
       }
     }
-    // 2) 폴백: 기기 공유시트 (모바일 → 카카오톡 선택 가능)
-    if (typeof navigator !== "undefined" && navigator.share) {
-      navigator.share({ title, text: description, url: link }).catch(() => {});
-      return;
-    }
-    // 3) 폴백: 링크 복사
+    // 3) 최종 폴백: 링크 복사
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard
         .writeText(link)
