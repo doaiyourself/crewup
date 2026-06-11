@@ -75,7 +75,7 @@ export default function AdminPayrollPage() {
 
   return (
     <>
-      <PageHeader title="급여 산정" subtitle={ymLabel()} right={<LogoutButton />} />
+      <PageHeader title="급여 산정" subtitle={ymLabel()} right={<LogoutButton light />} />
 
       <div className="px-4 pt-4">
         {loading ? (

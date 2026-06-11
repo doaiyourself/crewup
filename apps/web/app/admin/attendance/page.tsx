@@ -176,7 +176,7 @@ export default function AdminAttendancePage() {
       <PageHeader
         title="출퇴근 승인"
         subtitle={`최근 2주 · 미승인 ${pending}건`}
-        right={<LogoutButton />}
+        right={<LogoutButton light />}
       />
 
       <div className="px-4 pt-4">

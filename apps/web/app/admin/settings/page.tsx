@@ -128,7 +128,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="매장 설정" right={<LogoutButton />} />
+      <PageHeader title="매장 설정" right={<LogoutButton light />} />
 
       <div className="px-4 pt-4">
         {/* 매장 정보 */}

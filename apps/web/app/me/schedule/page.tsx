@@ -47,7 +47,7 @@ export default function MySchedulePage() {
 
   return (
     <>
-      <PageHeader title="내 스케줄" subtitle="주간 근무표" right={<LogoutButton />} />
+      <PageHeader title="내 스케줄" subtitle="주간 근무표" right={<LogoutButton light />} />
 
       <div className="px-4 pt-4">
         <Card className="mb-3 flex items-center justify-between">

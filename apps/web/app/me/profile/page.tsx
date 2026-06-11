@@ -58,7 +58,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="내 정보" right={<LogoutButton />} />
+      <PageHeader title="내 정보" right={<LogoutButton light />} />
 
       <div className="px-4 pt-4">
         <Card className="flex items-center gap-4">

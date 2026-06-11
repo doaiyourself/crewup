@@ -105,7 +105,7 @@ export default function ReportPage() {
 
   return (
     <>
-      <PageHeader title="통계 리포트" subtitle="최근 6개월" right={<LogoutButton />} />
+      <PageHeader title="통계 리포트" subtitle="최근 6개월" right={<LogoutButton light />} />
 
       <div className="px-4 pt-4">
         {loading ? (

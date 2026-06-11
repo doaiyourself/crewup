@@ -85,7 +85,7 @@ export default function StaffPage() {
       <PageHeader
         title="직원 관리"
         subtitle={`총 ${active.length}명`}
-        right={<LogoutButton />}
+        right={<LogoutButton light />}
       />
 
       <div className="px-4 pt-4">

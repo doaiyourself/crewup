@@ -93,7 +93,7 @@ export default function AttendancePage() {
 
   return (
     <>
-      <PageHeader title="출퇴근" subtitle={todayStr} right={<LogoutButton />} />
+      <PageHeader title="출퇴근" subtitle={todayStr} right={<LogoutButton light />} />
 
       <div className="px-4 pt-4">
         {/* 큰 출퇴근 버튼 */}

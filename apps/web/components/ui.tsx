@@ -15,15 +15,17 @@ export function PageHeader({
   right?: React.ReactNode;
 }) {
   return (
-    <header className="sticky top-0 z-10 rounded-b-2xl bg-gradient-to-br from-brand to-brand-dark px-5 pb-3 pt-3 text-white shadow-md shadow-brand/20">
+    <header className="sticky top-0 z-10 bg-slate-100/90 px-4 pb-2 pt-4 backdrop-blur">
       <div className="mx-auto max-w-md">
         <div className="flex items-center justify-between">
-          <StoreSwitcher />
-          {right}
+          <StoreSwitcher light />
+          {right ?? <LogoutButton light />}
         </div>
-        <div className="mt-2 flex items-baseline gap-2">
-          <h1 className="text-base font-extrabold tracking-tight">{title}</h1>
-          {subtitle && <p className="text-xs text-blue-100">{subtitle}</p>}
+        <div className="mt-2 flex items-baseline gap-2 px-1">
+          <h1 className="text-lg font-extrabold tracking-tight text-slate-900">
+            {title}
+          </h1>
+          {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
         </div>
       </div>
     </header>

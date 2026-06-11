@@ -43,7 +43,7 @@ export default function MeHome() {
 
   return (
     <>
-      <PageHeader title={`안녕하세요, ${account.name}님`} subtitle={today} right={<LogoutButton />} />
+      <PageHeader title={`안녕하세요, ${account.name}님`} subtitle={today} right={<LogoutButton light />} />
 
       <div className="px-4">
         {/* 출퇴근 카드 */}

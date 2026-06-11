@@ -66,7 +66,7 @@ export default function MyPayrollPage() {
 
   return (
     <>
-      <PageHeader title="내 급여" subtitle={`${ymLabel()} 예상`} right={<LogoutButton />} />
+      <PageHeader title="내 급여" subtitle={`${ymLabel()} 예상`} right={<LogoutButton light />} />
 
       <div className="px-4 pt-4">
         {loading || p === null ? (
