@@ -34,24 +34,24 @@ function SummaryCard({
   tint: string;
 }) {
   return (
-    <div className="flex min-w-[44%] flex-1 snap-start flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.05)] ring-1 ring-slate-100/80">
-      <span
-        className="flex h-9 w-9 items-center justify-center rounded-xl"
-        style={{ backgroundColor: `${tint}1a`, color: tint }}
-      >
-        <Icon name={icon} size={20} />
-      </span>
-      <div>
-        <p className="text-xs text-slate-400">{label}</p>
-        <p className="mt-0.5 text-xl font-extrabold text-slate-900">
-          {value}
-          {unit && (
-            <span className="ml-1 text-xs font-semibold text-slate-400">
-              {unit}
-            </span>
-          )}
-        </p>
+    <div className="flex min-w-[44%] flex-1 snap-start flex-col gap-1.5 rounded-2xl bg-white p-3.5 shadow-[0_1px_3px_rgba(15,23,42,0.05)] ring-1 ring-slate-100/80">
+      <div className="flex items-center gap-2">
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+          style={{ backgroundColor: `${tint}1a`, color: tint }}
+        >
+          <Icon name={icon} size={16} />
+        </span>
+        <p className="truncate text-xs text-slate-400">{label}</p>
       </div>
+      <p className="text-xl font-extrabold text-slate-900">
+        {value}
+        {unit && (
+          <span className="ml-1 text-xs font-semibold text-slate-400">
+            {unit}
+          </span>
+        )}
+      </p>
     </div>
   );
 }
@@ -104,19 +104,19 @@ export default function AdminDashboard() {
         <p className="mb-2 px-1 text-xs font-medium text-slate-400">{today}</p>
 
         {/* 요약 카드 — 가로 스크롤 */}
-        <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <SummaryCard
-            icon="payroll"
-            label="이번 달 인건비"
-            value={stats.laborCost > 0 ? wonShort(stats.laborCost) : "-"}
-            tint="#2F6BFF"
-          />
+        <div className="flex snap-x gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <SummaryCard
             icon="staff"
             label="현재 근무자"
             value={`${stats.working}`}
             unit={`/ ${stats.total}명`}
             tint="#16a34a"
+          />
+          <SummaryCard
+            icon="payroll"
+            label="이번 달 인건비"
+            value={stats.laborCost > 0 ? wonShort(stats.laborCost) : "-"}
+            tint="#2F6BFF"
           />
           <SummaryCard
             icon="attendance"
@@ -181,6 +181,11 @@ export default function AdminDashboard() {
           )}
         </Card>
 
+        {/* 오늘의 할일 (TodayTasks 자체 제목 보유) */}
+        <div className="mt-5">
+          <TodayTasks />
+        </div>
+
         {/* 바로가기 */}
         <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-700">
           바로가기
@@ -195,12 +200,6 @@ export default function AdminDashboard() {
           <QuickIcon href="/admin/payroll" icon="payroll" label="급여" />
           <QuickIcon href="/admin/report" icon="dashboard" label="통계" />
         </div>
-
-        {/* 오늘의 할일 */}
-        <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-700">
-          오늘의 할일
-        </h2>
-        <TodayTasks />
       </div>
     </>
   );
