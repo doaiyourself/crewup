@@ -228,7 +228,7 @@ export function ContractManager({
       >
         {saving ? "발행 중…" : "계약서 발행 (서명 요청)"}
       </button>
-      <style>{`.ci{width:100%;border:1px solid #e2e8f0;border-radius:0.5rem;padding:0.375rem 0.5rem;font-size:0.8125rem;outline:none}.ci:focus{border-color:#2F6BFF}`}</style>
+      <style>{`.ci{box-sizing:border-box;width:100%;height:40px;border:1px solid #e2e8f0;border-radius:0.5rem;padding:0 0.625rem;font-size:0.8125rem;line-height:1.2;color:#0f172a;background:#fff;outline:none;-webkit-appearance:none;appearance:none;text-align:left}.ci:focus{border-color:#2F6BFF}select.ci{padding-right:1.5rem;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M5 7l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.5rem center}`}</style>
     </div>
   );
 }
