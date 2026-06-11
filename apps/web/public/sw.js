@@ -1,7 +1,7 @@
 // Crew Up 서비스 워커 (동일 출처만). 외부(Supabase 등)는 패스.
 // 문서(HTML)는 항상 네트워크 → 배포 후 구버전 페이지가 캐시로 남지 않음.
 // 정적 해시 자산만 캐시(셸).
-const CACHE = "crewup-v2";
+const CACHE = "crewup-v3";
 
 self.addEventListener("install", () => self.skipWaiting());
 
