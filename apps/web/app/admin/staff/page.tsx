@@ -11,6 +11,11 @@ import { ContractManager } from "@/components/contract-manager";
 import { MemberEditor } from "@/components/member-editor";
 import { KakaoShareButton } from "@/components/kakao-share";
 import { HealthCerts } from "@/components/health-certs";
+import {
+  getCachedMembers,
+  setCachedMembers,
+  hasCachedMembers,
+} from "@/lib/members-cache";
 
 interface Member {
   user_id: string;
@@ -33,8 +38,12 @@ const FILTERS: { key: "all" | Role; label: string }[] = [
 
 export default function StaffPage() {
   const { currentStoreId, currentMembership, account } = useSession();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState<Member[]>(
+    () => getCachedMembers(currentStoreId) as Member[]
+  );
+  const [loading, setLoading] = useState(
+    () => currentStoreId !== "demo-store" && !hasCachedMembers(currentStoreId)
+  );
   const [filter, setFilter] = useState<"all" | Role>("all");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
@@ -48,12 +57,13 @@ export default function StaffPage() {
       setLoading(false);
       return;
     }
-    setLoading(true);
     const supabase = createClient();
     const { data } = await supabase.rpc("list_store_members", {
       p_store_id: currentStoreId,
     });
-    setMembers((data as Member[]) ?? []);
+    const arr = (data as Member[]) ?? [];
+    setMembers(arr);
+    setCachedMembers(currentStoreId, arr as any);
     setLoading(false);
   }, [currentStoreId]);
 

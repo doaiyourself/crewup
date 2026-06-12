@@ -1,4 +1,5 @@
 "use client";
+import { setCachedMembers } from "@/lib/members-cache";
 
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "@/lib/session";
@@ -119,6 +120,7 @@ export default function AdminAttendancePage() {
       .filter((m) => m.status === "active")
       .map((m) => ({ user_id: m.user_id, name: m.name, avatar_color: m.avatar_color }));
     setMembers(memArr);
+    setCachedMembers(currentStoreId, (memberData as any[]) ?? []);
     setDelegated(!!(storeRow as any)?.attendance_delegated);
     const nameMap = new Map(
       memArr.map((m) => [m.user_id, { name: m.name, color: m.avatar_color }])

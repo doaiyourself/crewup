@@ -1,4 +1,5 @@
 "use client";
+import { setCachedMembers } from "@/lib/members-cache";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -45,6 +46,7 @@ export default function AdminPayrollPage() {
         .eq("store_id", currentStoreId)
         .gte("work_date", monthStart),
     ]);
+    setCachedMembers(currentStoreId, (members as any[]) ?? []);
     const minByUser = new Map<string, number>();
     ((att as any[]) ?? []).forEach((r) =>
       minByUser.set(

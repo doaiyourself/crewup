@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Role } from "@/lib/mock-data";
+import { getCachedMembers, setCachedMembers } from "@/lib/members-cache";
 
 interface Member {
   user_id: string;
@@ -71,8 +72,10 @@ function mins(a: string | null, b: string | null): number {
 }
 
 export function useAdminStats(storeId: string | null): AdminStats {
+  const [members, setMembers] = useState<Member[]>(
+    () => getCachedMembers(storeId) as Member[]
+  );
   const [loading, setLoading] = useState(true);
-  const [members, setMembers] = useState<Member[]>([]);
   const [att, setAtt] = useState<Att[]>([]);
   const [scheds, setScheds] = useState<Sched[]>([]);
 
@@ -97,7 +100,9 @@ export function useAdminStats(storeId: string | null): AdminStats {
         .eq("store_id", storeId)
         .eq("day_of_week", todayDow),
     ]);
-    setMembers((m as Member[]) ?? []);
+    const memArr = (m as Member[]) ?? [];
+    setMembers(memArr);
+    setCachedMembers(storeId, memArr as any);
     setAtt((a as Att[]) ?? []);
     setScheds((s as Sched[]) ?? []);
     setLoading(false);

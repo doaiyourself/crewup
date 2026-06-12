@@ -1,4 +1,5 @@
 "use client";
+import { setCachedMembers } from "@/lib/members-cache";
 
 // 통계 리포트: 최근 6개월 인건비/근무시간 추이 + 선택 월 직원별 상세
 import { useCallback, useEffect, useState } from "react";
@@ -61,6 +62,7 @@ export default function ReportPage() {
         .gte("work_date", since),
     ]);
     setMembers((m as Member[]) ?? []);
+    setCachedMembers(currentStoreId, (m as any[]) ?? []);
     setAtt((a as Att[]) ?? []);
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps

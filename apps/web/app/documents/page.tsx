@@ -10,6 +10,7 @@ import { won } from "@/lib/format";
 import { Card, Avatar } from "@/components/ui";
 import { HealthCerts } from "@/components/health-certs";
 import { StoreDocs } from "@/components/store-docs";
+import { setCachedMembers } from "@/lib/members-cache";
 
 type Tab = "store" | "contract" | "payslip" | "health";
 
@@ -105,6 +106,7 @@ export default function DocumentsPage() {
     const ms = mRes.data;
     setContracts((cs as ContractRow[]) ?? []);
     setPays((ps as PayRow[]) ?? []);
+    if (isOwner) setCachedMembers(storeId, (ms as any[]) ?? []);
     setMembers(
       ((ms as any[]) ?? [])
         .filter((m) => m.status === "active")
