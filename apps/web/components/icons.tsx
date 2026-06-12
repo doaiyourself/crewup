@@ -9,7 +9,8 @@ export type IconName =
   | "settings"
   | "home"
   | "schedule"
-  | "profile";
+  | "profile"
+  | "doc";
 
 const PATHS: Record<IconName, ReactNode> = {
   // 우상향 막대 (로고 모티프)
@@ -72,6 +73,13 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <circle cx="12" cy="8" r="3.6" />
       <path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5" />
+    </>
+  ),
+  doc: (
+    <>
+      <path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z" />
+      <path d="M13 3v6h6" />
+      <path d="M9 13h6M9 17h6" />
     </>
   ),
 };

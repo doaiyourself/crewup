@@ -190,7 +190,7 @@ export default function AdminDashboard() {
         <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-slate-700">
           바로가기
         </h2>
-        <div className="grid grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-5 gap-2">
           <QuickIcon href="/admin/staff" icon="staff" label="직원" />
           <QuickIcon
             href="/admin/attendance"
@@ -198,6 +198,7 @@ export default function AdminDashboard() {
             label="출퇴근"
           />
           <QuickIcon href="/admin/payroll" icon="payroll" label="급여" />
+          <QuickIcon href="/documents" icon="doc" label="문서함" />
           <QuickIcon href="/admin/report" icon="dashboard" label="통계" />
         </div>
       </div>
