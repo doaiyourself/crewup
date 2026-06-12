@@ -10,6 +10,7 @@ import { ScheduleEditor } from "@/components/schedule-editor";
 import { ContractManager } from "@/components/contract-manager";
 import { MemberEditor } from "@/components/member-editor";
 import { KakaoShareButton } from "@/components/kakao-share";
+import { HealthCerts } from "@/components/health-certs";
 
 interface Member {
   user_id: string;
@@ -40,6 +41,7 @@ export default function StaffPage() {
   const [schedFor, setSchedFor] = useState<string | null>(null);
   const [contractFor, setContractFor] = useState<string | null>(null);
   const [editFor, setEditFor] = useState<string | null>(null);
+  const [certFor, setCertFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!currentStoreId || currentStoreId === "demo-store") {
@@ -206,6 +208,7 @@ export default function StaffPage() {
                       onClick={() => {
                         setContractFor(null);
                         setEditFor(null);
+                        setCertFor(null);
                         setSchedFor((id) => (id === m.user_id ? null : m.user_id));
                       }}
                       className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
@@ -220,6 +223,7 @@ export default function StaffPage() {
                       onClick={() => {
                         setSchedFor(null);
                         setEditFor(null);
+                        setCertFor(null);
                         setContractFor((id) =>
                           id === m.user_id ? null : m.user_id
                         );
@@ -236,6 +240,7 @@ export default function StaffPage() {
                       onClick={() => {
                         setSchedFor(null);
                         setContractFor(null);
+                        setCertFor(null);
                         setEditFor((id) => (id === m.user_id ? null : m.user_id));
                       }}
                       className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
@@ -246,6 +251,23 @@ export default function StaffPage() {
                     >
                       관리
                     </button>
+                    {isOwner && (
+                      <button
+                        onClick={() => {
+                          setSchedFor(null);
+                          setContractFor(null);
+                          setEditFor(null);
+                          setCertFor((id) => (id === m.user_id ? null : m.user_id));
+                        }}
+                        className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                          certFor === m.user_id
+                            ? "bg-brand text-white"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        보건증
+                      </button>
+                    )}
                   </div>
                 </div>
                 {schedFor === m.user_id && currentStoreId && (
@@ -276,6 +298,14 @@ export default function StaffPage() {
                       canChangeRole={isOwner}
                       onSaved={load}
                     />
+                  </div>
+                )}
+                {certFor === m.user_id && currentStoreId && (
+                  <div className="mt-3 border-t border-slate-100 pt-3">
+                    <p className="mb-2 text-[11px] font-semibold text-slate-500">
+                      보건증 · 본인과 사장님만 열람
+                    </p>
+                    <HealthCerts storeId={currentStoreId} userId={m.user_id} />
                   </div>
                 )}
               </Card>

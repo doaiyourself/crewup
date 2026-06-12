@@ -72,6 +72,21 @@ export default function ProfilePage() {
           </div>
         </Card>
 
+        <Link href="/me/documents" className="mt-3 block">
+          <Card className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-xl">
+              🗂
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-800">문서함</p>
+              <p className="text-xs text-slate-400">
+                근로계약서 · 보건증 업로드
+              </p>
+            </div>
+            <span className="text-slate-300">›</span>
+          </Card>
+        </Link>
+
         <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">
           근무 정보
         </h2>
