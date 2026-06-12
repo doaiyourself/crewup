@@ -220,6 +220,16 @@ export default function SettingsPage() {
           )}
         </Card>
 
+        {/* 내문서 (매장 사업 서류) */}
+        <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">
+          내문서
+        </h2>
+        <Card>
+          {currentStoreId && (
+            <StoreDocs storeId={currentStoreId} canManage={isOwner} />
+          )}
+        </Card>
+
         {/* 매장 초대 코드 */}
         {currentMembership?.joinCode && (
           <Card tone="brand" className="mt-3">
@@ -280,20 +290,6 @@ export default function SettingsPage() {
             </Card>
           </>
         )}
-
-        {/* 기타문서 (매장 사업 서류) */}
-        <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">
-          기타문서 (매장 서류)
-        </h2>
-        <Card>
-          <p className="mb-2 text-xs leading-relaxed text-slate-400">
-            임대차계약서·사업자등록증 등 매장 서류를 보관해요.{" "}
-            {isOwner ? "등록은 사장님만," : ""} 열람은 관리자만 가능합니다.
-          </p>
-          {currentStoreId && (
-            <StoreDocs storeId={currentStoreId} canManage={isOwner} />
-          )}
-        </Card>
 
         {/* 키오스크(매장 대시보드) */}
         <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">

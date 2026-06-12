@@ -121,9 +121,17 @@ export function StoreDocs({
       {loading ? (
         <p className="py-3 text-center text-xs text-slate-400">불러오는 중…</p>
       ) : docs.length === 0 ? (
-        <p className="rounded-lg bg-slate-50 py-4 text-center text-xs text-slate-400">
-          등록된 문서가 없어요.
-        </p>
+        <div className="rounded-xl bg-slate-50 px-4 py-7 text-center">
+          <p className="text-3xl">🗂</p>
+          <p className="mt-2 text-sm font-bold text-slate-700">
+            사업자등록증, 임대차계약서 등 중요 문서를 보관하세요
+          </p>
+          <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
+            매장 운영에 필요한 서류를 사진·PDF로 올려두면
+            <br />
+            필요할 때 바로 꺼내볼 수 있어요.
+          </p>
+        </div>
       ) : (
         docs.map((d) => (
           <div
