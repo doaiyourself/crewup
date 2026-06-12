@@ -40,6 +40,7 @@ export function ContractManager({
     })
   );
   const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const load = async () => {
     const supabase = createClient();
@@ -76,6 +77,7 @@ export function ContractManager({
       .single();
     setContract(data as any);
     setSaving(false);
+    setShowForm(false);
   };
 
   const set = (patch: Partial<ContractContent>) =>
@@ -84,38 +86,43 @@ export function ContractManager({
   if (loading)
     return <p className="py-3 text-center text-xs text-slate-400">불러오는 중…</p>;
 
-  // 이미 계약서가 있으면 상태 + 보기
-  if (contract) {
-    return (
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-slate-600">
-          계약서 상태:{" "}
-          <b
-            className={
-              contract.status === "signed"
-                ? "text-green-600"
-                : contract.status === "pending"
-                ? "text-amber-600"
-                : "text-slate-500"
-            }
-          >
-            {CONTRACT_STATUS_LABEL[contract.status]}
-          </b>
-        </span>
-        <Link
-          href={`/contract/${contract.id}`}
-          className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white"
-        >
-          계약서 보기
-        </Link>
-      </div>
-    );
-  }
-
-  // 발행 폼
   return (
-    <div className="space-y-2 text-sm">
-      <div className="grid grid-cols-2 gap-2">
+    <div className="space-y-3 text-sm">
+      {contract && (
+        <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5">
+          <span className="text-sm text-slate-600">
+            계약서 상태:{" "}
+            <b
+              className={
+                contract.status === "signed"
+                  ? "text-green-600"
+                  : contract.status === "pending"
+                  ? "text-amber-600"
+                  : "text-slate-500"
+              }
+            >
+              {CONTRACT_STATUS_LABEL[contract.status]}
+            </b>
+          </span>
+          <Link
+            href={`/contract/${contract.id}`}
+            className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white"
+          >
+            계약서 보기
+          </Link>
+        </div>
+      )}
+      {contract && !showForm && (
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full rounded-lg border border-dashed border-brand/40 bg-blue-50/40 py-2.5 text-sm font-semibold text-brand transition active:scale-[0.98]"
+        >
+          ＋ 새 근로계약서 작성
+        </button>
+      )}
+      {(!contract || showForm) && (
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
         <Field label="근로개시일">
           <input
             type="date"
@@ -221,13 +228,23 @@ export function ContractManager({
           4대보험
         </label>
       </div>
-      <button
-        onClick={issue}
-        disabled={saving}
-        className="w-full rounded-lg bg-brand py-2 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-60"
-      >
-        {saving ? "발행 중…" : "계약서 발행 (서명 요청)"}
-      </button>
+          <button
+            onClick={issue}
+            disabled={saving}
+            className="w-full rounded-lg bg-brand py-2 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-60"
+          >
+            {saving ? "발행 중…" : "계약서 발행 (서명 요청)"}
+          </button>
+          {contract && showForm && (
+            <button
+              onClick={() => setShowForm(false)}
+              className="w-full rounded-lg py-2 text-sm font-semibold text-slate-400"
+            >
+              취소
+            </button>
+          )}
+        </div>
+      )}
       <style>{`.ci{box-sizing:border-box;width:100%;height:40px;border:1px solid #e2e8f0;border-radius:0.5rem;padding:0 0.625rem;font-size:0.8125rem;line-height:1.2;color:#0f172a;background:#fff;outline:none;-webkit-appearance:none;appearance:none;text-align:left}.ci:focus{border-color:#2F6BFF}select.ci{padding-right:1.5rem;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M5 7l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.5rem center}`}</style>
     </div>
   );
