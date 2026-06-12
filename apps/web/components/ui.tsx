@@ -16,17 +16,18 @@ export function PageHeader({
 }) {
   return (
     <header className="sticky top-0 z-10 bg-slate-100/90 px-4 pb-2 pt-4 backdrop-blur">
-      <div className="mx-auto max-w-md">
-        <div className="flex items-center justify-between">
-          <StoreSwitcher light />
-          {right ?? <AccountBadge />}
-        </div>
-        <div className="mt-2 flex items-baseline gap-2 px-1">
-          <h1 className="text-lg font-extrabold tracking-tight text-slate-900">
+      <div className="mx-auto flex max-w-md items-center justify-between gap-2">
+        {/* 왼쪽: 화면 메뉴명 */}
+        <div className="flex min-w-0 items-baseline gap-2">
+          <h1 className="truncate text-lg font-extrabold tracking-tight text-slate-900">
             {title}
           </h1>
-          {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
+          {subtitle && (
+            <p className="shrink-0 text-xs text-slate-400">{subtitle}</p>
+          )}
         </div>
+        {/* 오른쪽: 매장 전환기 */}
+        <StoreSwitcher light />
       </div>
     </header>
   );

@@ -6,7 +6,7 @@ import { useSession } from "@/lib/session";
 import { useAdminStats, type RosterStatus } from "@/lib/use-admin-stats";
 import { ROLE_LABEL } from "@/lib/mock-data";
 import { wonShort, todayLabel } from "@/lib/format";
-import { Card, Avatar, AccountBadge } from "@/components/ui";
+import { Card, Avatar } from "@/components/ui";
 import { StoreSwitcher } from "@/components/store-switcher";
 import { TodayTasks } from "@/components/today-tasks";
 import { Icon, type IconName } from "@/components/icons";
@@ -92,16 +92,20 @@ export default function AdminDashboard() {
 
   return (
     <>
-      {/* 가벼운 헤더 (흰 칩 + 로그아웃) */}
+      {/* 헤더: 왼쪽 메뉴명+날짜, 오른쪽 매장 전환기 */}
       <header className="sticky top-0 z-10 bg-slate-100/90 px-4 pb-2 pt-4 backdrop-blur">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-lg font-extrabold tracking-tight text-slate-900">
+              대시보드
+            </h1>
+            <p className="text-xs text-slate-400">{today}</p>
+          </div>
           <StoreSwitcher light />
-          <AccountBadge light />
         </div>
       </header>
 
       <div className="px-4 pb-4">
-        <p className="mb-2 px-1 text-xs font-medium text-slate-400">{today}</p>
 
         {/* 요약 카드 — 가로 스크롤 */}
         <div className="flex snap-x gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

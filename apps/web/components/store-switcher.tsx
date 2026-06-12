@@ -54,7 +54,7 @@ export function StoreSwitcher({ light = false }: { light?: boolean }) {
             onClick={() => setOpen(false)}
             aria-label="닫기"
           />
-          <div className="absolute left-0 top-full z-40 mt-2 w-60 overflow-hidden rounded-2xl bg-white text-slate-800 shadow-xl ring-1 ring-slate-200">
+          <div className="absolute right-0 top-full z-40 mt-2 w-60 overflow-hidden rounded-2xl bg-white text-slate-800 shadow-xl ring-1 ring-slate-200">
             <p className="px-4 pb-1 pt-3 text-[11px] font-bold text-slate-400">
               내 매장 ({memberships.length})
             </p>
