@@ -5,9 +5,9 @@ import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { ROLE_LABEL } from "@/lib/mock-data";
 import { PageHeader, Card, AccountBadge } from "@/components/ui";
+import Link from "next/link";
 import { PinPad } from "@/components/pin-pad";
 import { AttendanceConfig } from "@/components/attendance-config";
-import { StoreDocs } from "@/components/store-docs";
 
 function MenuRow({ icon, label, desc }: { icon: string; label: string; desc?: string }) {
   return (
@@ -220,15 +220,21 @@ export default function SettingsPage() {
           )}
         </Card>
 
-        {/* 내문서 (매장 사업 서류) */}
-        <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">
-          내문서
-        </h2>
-        <Card>
-          {currentStoreId && (
-            <StoreDocs storeId={currentStoreId} canManage={isOwner} />
-          )}
-        </Card>
+        {/* 문서함 */}
+        <Link href="/documents" className="mt-3 block">
+          <Card className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-xl">
+              🗂
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-800">문서함</p>
+              <p className="text-xs text-slate-400">
+                매장서류 · 계약서 · 급여명세서 · 보건증
+              </p>
+            </div>
+            <span className="text-slate-300">›</span>
+          </Card>
+        </Link>
 
         {/* 매장 초대 코드 */}
         {currentMembership?.joinCode && (

@@ -72,7 +72,7 @@ export default function ProfilePage() {
           </div>
         </Card>
 
-        <Link href="/me/documents" className="mt-3 block">
+        <Link href="/documents" className="mt-3 block">
           <Card className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-xl">
               🗂
