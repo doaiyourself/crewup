@@ -37,6 +37,10 @@ export default function SettingsPage() {
   const [storeAddr, setStoreAddr] = useState("");
   const [bizNo, setBizNo] = useState("");
   const [savingStore, setSavingStore] = useState(false);
+  // 출퇴근 권한 위임 (점장)
+  const [delegated, setDelegated] = useState(false);
+  const [savingDelegate, setSavingDelegate] = useState(false);
+  const isOwner = account?.role === "owner";
 
   const loadKiosk = async () => {
     if (!currentStoreId || currentStoreId === "demo-store") return;
@@ -51,7 +55,7 @@ export default function SettingsPage() {
         .order("created_at"),
       supabase
         .from("stores")
-        .select("name, address, biz_no")
+        .select("name, address, biz_no, attendance_delegated")
         .eq("id", currentStoreId)
         .maybeSingle(),
     ]);
@@ -61,7 +65,22 @@ export default function SettingsPage() {
       setStoreName(store.name ?? "");
       setStoreAddr(store.address ?? "");
       setBizNo(store.biz_no ?? "");
+      setDelegated(!!store.attendance_delegated);
     }
+  };
+
+  const toggleDelegate = async () => {
+    if (!currentStoreId || savingDelegate) return;
+    const next = !delegated;
+    setSavingDelegate(true);
+    setDelegated(next); // 낙관적 반영
+    const supabase = createClient();
+    const { error } = await supabase.rpc("set_attendance_delegation", {
+      p_store_id: currentStoreId,
+      p_on: next,
+    });
+    if (error) setDelegated(!next); // 실패 시 롤백
+    setSavingDelegate(false);
   };
 
   const saveStore = async () => {
@@ -223,6 +242,43 @@ export default function SettingsPage() {
           출퇴근 인증 방식
         </h2>
         {currentStoreId && <AttendanceConfig storeId={currentStoreId} />}
+
+        {/* 출퇴근 권한 위임 (사장 전용) */}
+        {isOwner && currentStoreId && (
+          <>
+            <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">
+              출퇴근 권한
+            </h2>
+            <Card>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">
+                    점장에게 출퇴근 권한 위임
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
+                    켜면 점장이 출퇴근 <b className="text-slate-500">수정·승인·추가</b>
+                    를 할 수 있어요. 끄면 사장님만 가능합니다.
+                  </p>
+                </div>
+                <button
+                  role="switch"
+                  aria-checked={delegated}
+                  onClick={toggleDelegate}
+                  disabled={savingDelegate}
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-60 ${
+                    delegated ? "bg-brand" : "bg-slate-300"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${
+                      delegated ? "left-[22px]" : "left-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+            </Card>
+          </>
+        )}
 
         {/* 키오스크(매장 대시보드) */}
         <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">

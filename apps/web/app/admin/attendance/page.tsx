@@ -54,6 +54,12 @@ function hmMin(hm: string): number {
 }
 const GRACE = 5; // 분
 
+function localYmd(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 export default function AdminAttendancePage() {
   const { currentStoreId, account } = useSession();
   const [rows, setRows] = useState<Row[]>([]);
@@ -67,6 +73,19 @@ export default function AdminAttendancePage() {
     out: "",
     status: "normal",
   });
+  const [members, setMembers] = useState<
+    { user_id: string; name: string; avatar_color: string }[]
+  >([]);
+  const [delegated, setDelegated] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [addForm, setAddForm] = useState<{
+    userId: string;
+    date: string;
+    in: string;
+    out: string;
+    status: string;
+  }>({ userId: "", date: localYmd(), in: "", out: "", status: "normal" });
+  const [addErr, setAddErr] = useState("");
 
   const load = useCallback(async () => {
     if (!currentStoreId || currentStoreId === "demo-store") {
@@ -75,7 +94,7 @@ export default function AdminAttendancePage() {
     }
     const supabase = createClient();
     const since = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
-    const [{ data: members }, { data: att }, { data: schedules }] =
+    const [{ data: memberData }, { data: att }, { data: schedules }, { data: storeRow }] =
       await Promise.all([
         supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
         supabase
@@ -90,12 +109,19 @@ export default function AdminAttendancePage() {
           .from("schedules")
           .select("user_id, day_of_week, start_time, end_time")
           .eq("store_id", currentStoreId),
+        supabase
+          .from("stores")
+          .select("attendance_delegated")
+          .eq("id", currentStoreId)
+          .maybeSingle(),
       ]);
+    const memArr = ((memberData as any[]) ?? [])
+      .filter((m) => m.status === "active")
+      .map((m) => ({ user_id: m.user_id, name: m.name, avatar_color: m.avatar_color }));
+    setMembers(memArr);
+    setDelegated(!!(storeRow as any)?.attendance_delegated);
     const nameMap = new Map(
-      ((members as any[]) ?? []).map((m) => [
-        m.user_id,
-        { name: m.name, color: m.avatar_color },
-      ])
+      memArr.map((m) => [m.user_id, { name: m.name, color: m.avatar_color }])
     );
     const sMap = new Map<string, { start: string; end: string }>();
     ((schedules as any[]) ?? []).forEach((s) =>
@@ -169,6 +195,40 @@ export default function AdminAttendancePage() {
     await load();
   };
 
+  // 출퇴근 관리 권한: 사장 항상, 점장은 위임된 경우만 (백엔드 RLS와 일치)
+  const canManage =
+    account?.role === "owner" ||
+    (account?.role === "manager" && delegated);
+
+  const addRecord = async () => {
+    setAddErr("");
+    if (!addForm.userId) {
+      setAddErr("직원을 선택하세요.");
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase.from("attendance").insert({
+      store_id: currentStoreId,
+      user_id: addForm.userId,
+      work_date: addForm.date,
+      clock_in_at: timeToIso(addForm.date, addForm.in),
+      clock_out_at: timeToIso(addForm.date, addForm.out),
+      status: addForm.status,
+      approved_by: account?.id ?? null,
+    });
+    if (error) {
+      setAddErr(
+        (error as any).code === "23505"
+          ? "이미 그 날짜 기록이 있어요. 목록에서 수정하세요."
+          : "추가에 실패했어요. 권한을 확인해 주세요."
+      );
+      return;
+    }
+    setAdding(false);
+    setAddForm({ userId: "", date: localYmd(), in: "", out: "", status: "normal" });
+    await load();
+  };
+
   const pending = rows.filter((r) => !r.approved_by).length;
 
   return (
@@ -180,6 +240,122 @@ export default function AdminAttendancePage() {
       />
 
       <div className="px-4 pt-4">
+        {/* 출퇴근 직접 추가 (사장 항상 · 점장은 위임 시) */}
+        {canManage ? (
+          <>
+            <button
+              onClick={() => {
+                setAdding((v) => !v);
+                setAddErr("");
+              }}
+              className="mb-3 w-full rounded-xl bg-brand py-3 text-sm font-bold text-white transition active:scale-[0.99]"
+            >
+              {adding ? "닫기" : "＋ 출퇴근 직접 추가"}
+            </button>
+            {adding && (
+              <Card className="mb-3 space-y-2.5">
+                <label className="block">
+                  <span className="mb-1 block text-[11px] font-semibold text-slate-500">
+                    직원
+                  </span>
+                  <select
+                    value={addForm.userId}
+                    onChange={(e) =>
+                      setAddForm((f) => ({ ...f, userId: e.target.value }))
+                    }
+                    className="att-i"
+                  >
+                    <option value="">직원 선택</option>
+                    {members.map((m) => (
+                      <option key={m.user_id} value={m.user_id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-[11px] font-semibold text-slate-500">
+                    날짜
+                  </span>
+                  <input
+                    type="date"
+                    value={addForm.date}
+                    onChange={(e) =>
+                      setAddForm((f) => ({ ...f, date: e.target.value }))
+                    }
+                    className="att-i"
+                  />
+                </label>
+                <div className="flex gap-2">
+                  <label className="block flex-1">
+                    <span className="mb-1 block text-[11px] font-semibold text-slate-500">
+                      출근
+                    </span>
+                    <input
+                      type="time"
+                      value={addForm.in}
+                      onChange={(e) =>
+                        setAddForm((f) => ({ ...f, in: e.target.value }))
+                      }
+                      className="att-i"
+                    />
+                  </label>
+                  <label className="block flex-1">
+                    <span className="mb-1 block text-[11px] font-semibold text-slate-500">
+                      퇴근
+                    </span>
+                    <input
+                      type="time"
+                      value={addForm.out}
+                      onChange={(e) =>
+                        setAddForm((f) => ({ ...f, out: e.target.value }))
+                      }
+                      className="att-i"
+                    />
+                  </label>
+                </div>
+                <div className="flex gap-1.5">
+                  {STATUS.map((s) => (
+                    <button
+                      key={s.key}
+                      onClick={() =>
+                        setAddForm((f) => ({ ...f, status: s.key }))
+                      }
+                      className={`flex-1 rounded-lg py-1.5 text-xs font-semibold ${
+                        addForm.status === s.key
+                          ? "bg-brand text-white"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+                {addErr && (
+                  <p className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-500">
+                    {addErr}
+                  </p>
+                )}
+                <button
+                  onClick={addRecord}
+                  className="w-full rounded-lg bg-brand py-2 text-sm font-semibold text-white transition active:scale-[0.98]"
+                >
+                  추가 (승인 처리)
+                </button>
+                <style>{`.att-i{box-sizing:border-box;width:100%;height:40px;border:1px solid #e2e8f0;border-radius:0.5rem;padding:0 0.625rem;font-size:0.8125rem;line-height:1.2;color:#0f172a;background:#fff;outline:none;-webkit-appearance:none;appearance:none}.att-i:focus{border-color:#2F6BFF}select.att-i{padding-right:1.5rem;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M5 7l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.5rem center}`}</style>
+              </Card>
+            )}
+          </>
+        ) : account?.role === "manager" ? (
+          <Card className="mb-3 !bg-amber-50 !ring-amber-100">
+            <p className="text-xs leading-relaxed text-amber-700">
+              출퇴근 관리 권한이 없어요. 사장님이{" "}
+              <b>매장 설정 → 출퇴근 권한 위임</b>을 켜면 수정·승인·추가할 수
+              있어요.
+            </p>
+          </Card>
+        ) : null}
+
         {loading ? (
           <Card className="py-10 text-center text-sm text-slate-400">
             불러오는 중…
@@ -232,7 +408,7 @@ export default function AdminAttendancePage() {
                   </span>
                 </div>
 
-                {editing === r.id ? (
+                {!canManage ? null : editing === r.id ? (
                   <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
                     <div className="flex gap-2">
                       <label className="flex-1 text-xs text-slate-500">
