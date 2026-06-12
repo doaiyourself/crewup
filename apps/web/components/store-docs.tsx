@@ -108,6 +108,21 @@ export function StoreDocs({
     if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener");
   };
 
+  const download = async (d: Doc) => {
+    const supabase = createClient();
+    const { data } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(d.file_path, 60, { download: d.file_name ?? d.title });
+    if (data?.signedUrl) {
+      const a = document.createElement("a");
+      a.href = data.signedUrl;
+      a.download = d.file_name ?? d.title;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  };
+
   const remove = async (d: Doc) => {
     if (!confirm(`'${d.title}' 문서를 삭제할까요?`)) return;
     const supabase = createClient();
@@ -153,6 +168,12 @@ export function StoreDocs({
               className="shrink-0 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"
             >
               열기
+            </button>
+            <button
+              onClick={() => download(d)}
+              className="shrink-0 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"
+            >
+              다운로드
             </button>
             {canManage && (
               <button
