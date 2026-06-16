@@ -10,7 +10,8 @@ export type IconName =
   | "home"
   | "schedule"
   | "profile"
-  | "doc";
+  | "doc"
+  | "inventory";
 
 const PATHS: Record<IconName, ReactNode> = {
   // 우상향 막대 (로고 모티프)
@@ -80,6 +81,14 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z" />
       <path d="M13 3v6h6" />
       <path d="M9 13h6M9 17h6" />
+    </>
+  ),
+  // 상자 (재고)
+  inventory: (
+    <>
+      <path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z" />
+      <path d="M3 7.5 12 12l9-4.5" />
+      <path d="M12 12v9" />
     </>
   ),
 };
