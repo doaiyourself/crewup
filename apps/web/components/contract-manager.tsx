@@ -147,6 +147,25 @@ export function ContractManager({
           placeholder="예: 홀 서빙, 매장 청소"
           className="ci"
         />
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {["음료 제조", "홀 서빙", "매장 청소"].map((ex) => (
+            <button
+              key={ex}
+              type="button"
+              onClick={() => {
+                const parts = form.jobDesc
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+                if (parts.includes(ex)) return;
+                set({ jobDesc: [...parts, ex].join(", ") });
+              }}
+              className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 transition active:scale-95"
+            >
+              + {ex}
+            </button>
+          ))}
+        </div>
       </Field>
       <Field label="근무일">
         <input
