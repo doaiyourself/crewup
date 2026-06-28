@@ -74,10 +74,42 @@ function localYmd(): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
+type Period = "week" | "month" | "lastmonth";
+const PERIODS: { key: Period; label: string }[] = [
+  { key: "week", label: "이번주" },
+  { key: "month", label: "이번달" },
+  { key: "lastmonth", label: "저번달" },
+];
+// 기간 → 조회 범위(YYYY-MM-DD)
+function rangeFor(period: Period): { since: string; until: string } {
+  const now = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  const ymd = (d: Date) =>
+    `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  if (period === "week") {
+    const d = new Date(now);
+    const mondayOffset = (d.getDay() + 6) % 7; // 월요일 시작
+    d.setDate(d.getDate() - mondayOffset);
+    return { since: ymd(d), until: ymd(now) };
+  }
+  if (period === "lastmonth") {
+    const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const last = new Date(now.getFullYear(), now.getMonth(), 0);
+    return { since: ymd(first), until: ymd(last) };
+  }
+  // month (이번달)
+  return {
+    since: ymd(new Date(now.getFullYear(), now.getMonth(), 1)),
+    until: ymd(now),
+  };
+}
+
 export default function AdminAttendancePage() {
   const { currentStoreId, account } = useSession();
   const [rows, setRows] = useState<Row[]>([]);
   const [requests, setRequests] = useState<ReqRow[]>([]);
+  const [period, setPeriod] = useState<Period>("month");
+  const [memberFilter, setMemberFilter] = useState<string>("");
   const [sched, setSched] = useState<Map<string, { start: string; end: string }>>(
     new Map()
   );
@@ -108,7 +140,7 @@ export default function AdminAttendancePage() {
       return;
     }
     const supabase = createClient();
-    const since = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
+    const { since, until } = rangeFor(period);
     const [
       { data: memberData },
       { data: att },
@@ -124,6 +156,7 @@ export default function AdminAttendancePage() {
         )
         .eq("store_id", currentStoreId)
         .gte("work_date", since)
+        .lte("work_date", until)
         .order("work_date", { ascending: false }),
       supabase
         .from("schedules")
@@ -175,7 +208,7 @@ export default function AdminAttendancePage() {
       }))
     );
     setLoading(false);
-  }, [currentStoreId]);
+  }, [currentStoreId, period]);
 
   // 수정·추가 요청 처리 (승인 시 출퇴근 기록에 반영)
   const reviewRequest = async (id: string, approve: boolean) => {
@@ -279,29 +312,71 @@ export default function AdminAttendancePage() {
     await load();
   };
 
-  const pending = rows.filter((r) => !r.approved_by).length;
+  const shownRows = memberFilter
+    ? rows.filter((r) => r.user_id === memberFilter)
+    : rows;
+  const shownRequests = memberFilter
+    ? requests.filter((q) => q.user_id === memberFilter)
+    : requests;
+  const pending = shownRows.filter((r) => !r.approved_by).length;
+  const periodLabel = PERIODS.find((p) => p.key === period)?.label ?? "";
 
   return (
     <>
       <PageHeader
         title="출퇴근 승인"
         subtitle={
-          requests.length > 0
-            ? `요청 ${requests.length}건 · 미승인 ${pending}건`
-            : `최근 2주 · 미승인 ${pending}건`
+          shownRequests.length > 0
+            ? `요청 ${shownRequests.length}건 · 미승인 ${pending}건`
+            : `${periodLabel} · 미승인 ${pending}건`
         }
         right={<AccountBadge light />}
       />
 
       <div className="px-4 pt-4">
+        {/* 조회 필터: 기간 + 직원 */}
+        <div className="mb-3 space-y-2">
+          <div className="flex gap-1.5">
+            {PERIODS.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => setPeriod(p.key)}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition ${
+                  period === p.key
+                    ? "bg-brand text-white"
+                    : "bg-white text-slate-500 ring-1 ring-slate-200"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <select
+            value={memberFilter}
+            onChange={(e) => setMemberFilter(e.target.value)}
+            className="w-full appearance-none rounded-lg border border-slate-200 bg-white bg-[length:16px] bg-[right_0.6rem_center] bg-no-repeat px-3 py-2.5 pr-8 text-sm text-slate-700 outline-none focus:border-brand"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M5 7l5 5 5-5'/%3E%3C/svg%3E\")",
+            }}
+          >
+            <option value="">전체 직원</option>
+            {members.map((m) => (
+              <option key={m.user_id} value={m.user_id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* 수정·추가 요청 검토 (사장/위임 점장) */}
-        {canManage && requests.length > 0 && (
+        {canManage && shownRequests.length > 0 && (
           <div className="mb-3">
             <h2 className="mb-2 px-1 text-sm font-bold text-slate-700">
-              수정·추가 요청 {requests.length}건
+              수정·추가 요청 {shownRequests.length}건
             </h2>
             <div className="space-y-2">
-              {requests.map((q) => (
+              {shownRequests.map((q) => (
                 <Card key={q.id} className="!bg-blue-50/50 !ring-blue-100">
                   <div className="flex items-center gap-3">
                     <Avatar name={q.name} color={q.avatar_color} size={36} />
@@ -474,16 +549,16 @@ export default function AdminAttendancePage() {
           <Card className="py-10 text-center text-sm text-slate-400">
             불러오는 중…
           </Card>
-        ) : rows.length === 0 ? (
+        ) : shownRows.length === 0 ? (
           <Card className="py-10 text-center">
             <p className="text-3xl">🗓</p>
             <p className="mt-2 text-sm text-slate-500">
-              최근 출퇴근 기록이 없어요.
+              {periodLabel} 출퇴근 기록이 없어요.
             </p>
           </Card>
         ) : (
           <div className="space-y-2.5">
-            {rows.map((r) => (
+            {shownRows.map((r) => (
               <Card key={r.id}>
                 <div className="flex items-center gap-3">
                   <Avatar name={r.name} color={r.avatar_color} />
