@@ -1,5 +1,6 @@
 import { Guard } from "@/components/guard";
 import { BottomNav, type NavItem } from "@/components/bottom-nav";
+import { AppBadge } from "@/components/app-badge";
 
 const NAV: NavItem[] = [
   { href: "/me", label: "홈", icon: "home" },
@@ -12,6 +13,7 @@ const NAV: NavItem[] = [
 export default function MeLayout({ children }: { children: React.ReactNode }) {
   return (
     <Guard need="worker">
+      <AppBadge />
       <div className="min-h-screen bg-slate-100 pb-20">
         <div className="mx-auto max-w-md">{children}</div>
       </div>

@@ -1,6 +1,7 @@
 import { Guard } from "@/components/guard";
 import { BottomNav, type NavItem } from "@/components/bottom-nav";
 import { VerificationGate } from "@/components/verification-gate";
+import { AppBadge } from "@/components/app-badge";
 
 const NAV: NavItem[] = [
   { href: "/admin", label: "대시보드", icon: "dashboard" },
@@ -17,6 +18,7 @@ export default function AdminLayout({
 }) {
   return (
     <Guard need="admin">
+      <AppBadge />
       <VerificationGate>
         <div className="min-h-screen bg-slate-100 pb-20">
           <div className="mx-auto max-w-md">{children}</div>
