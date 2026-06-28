@@ -566,18 +566,20 @@ export default function AdminAttendancePage() {
               <Card key={r.id}>
                 <div className="flex items-center gap-3">
                   {/* 날짜 — 가장 크게, 왼쪽 */}
-                  <div className="flex w-16 shrink-0 flex-col items-center border-r border-slate-100 pr-3">
-                    <span className="text-[28px] font-extrabold leading-none text-slate-900">
+                  <div className="flex w-14 shrink-0 flex-col items-center border-r border-slate-100 pr-3">
+                    <span className="text-[26px] font-extrabold leading-none text-slate-900">
                       {dateParts(r.work_date).d}
                     </span>
                     <span className="mt-1 text-[11px] font-medium text-slate-400">
-                      {dateParts(r.work_date).m}월 ({dateParts(r.work_date).dow})
+                      {dateParts(r.work_date).m}월({dateParts(r.work_date).dow})
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <Avatar name={r.name} color={r.avatar_color} size={22} />
-                      <p className="font-semibold text-slate-900">{r.name}</p>
+                      <Avatar name={r.name} color={r.avatar_color} size={20} />
+                      <p className="truncate font-semibold text-slate-900">
+                        {r.name}
+                      </p>
                       <span className={`text-xs font-semibold ${statusCls(r.status)}`}>
                         {statusLabel(r.status)}
                       </span>
@@ -585,6 +587,13 @@ export default function AdminAttendancePage() {
                     <p className="mt-1 text-xs text-slate-500">
                       출근 {toTimeInput(r.clock_in_at) || "--:--"} · 퇴근{" "}
                       {toTimeInput(r.clock_out_at) || "--:--"}
+                      <span
+                        className={`ml-1 font-semibold ${
+                          r.approved_by ? "text-green-600" : "text-amber-600"
+                        }`}
+                      >
+                        · {r.approved_by ? "승인됨" : "미승인"}
+                      </span>
                     </p>
                     {(() => {
                       const v = verdict(r);
@@ -596,18 +605,28 @@ export default function AdminAttendancePage() {
                       );
                     })()}
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                      r.approved_by
-                        ? "bg-green-100 text-green-700"
-                        : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
-                    {r.approved_by ? "승인됨" : "미승인"}
-                  </span>
+                  {/* 액션 — 오른쪽 */}
+                  {canManage && editing !== r.id && (
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {!r.approved_by && (
+                        <button
+                          onClick={() => approve(r)}
+                          className="rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white transition active:scale-95"
+                        >
+                          승인
+                        </button>
+                      )}
+                      <button
+                        onClick={() => startEdit(r)}
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition active:scale-95"
+                      >
+                        수정
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {!canManage ? null : editing === r.id ? (
+                {canManage && editing === r.id && (
                   <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
                     <div className="flex gap-2">
                       <label className="flex-1 text-xs text-slate-500">
@@ -668,23 +687,6 @@ export default function AdminAttendancePage() {
                         취소
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() => startEdit(r)}
-                      className="flex-1 rounded-xl border border-slate-300 bg-white py-2 text-sm font-semibold text-slate-600 transition active:scale-[0.98]"
-                    >
-                      수정
-                    </button>
-                    {!r.approved_by && (
-                      <button
-                        onClick={() => approve(r)}
-                        className="flex-1 rounded-xl bg-brand py-2 text-sm font-semibold text-white transition active:scale-[0.98]"
-                      >
-                        승인
-                      </button>
-                    )}
                   </div>
                 )}
               </Card>
