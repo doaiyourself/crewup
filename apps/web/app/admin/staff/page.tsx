@@ -91,6 +91,14 @@ export default function StaffPage() {
   const active = members.filter((m) => m.status === "active");
   const list = active.filter((m) => filter === "all" || m.role === filter);
   const isOwner = account?.role === "owner";
+  const ownerId = currentMembership?.ownerId ?? null;
+  const isFounder = !!account && !!ownerId && account.id === ownerId;
+  const roleBadge = (m: Member) =>
+    m.role === "owner"
+      ? m.user_id === ownerId
+        ? "대표"
+        : "공동대표"
+      : ROLE_LABEL[m.role];
 
   return (
     <>
@@ -205,7 +213,7 @@ export default function StaffPage() {
                             : "bg-slate-100 text-slate-500"
                         }`}
                       >
-                        {ROLE_LABEL[m.role]}
+                        {roleBadge(m)}
                       </span>
                     </div>
                     <p className="mt-0.5 truncate text-xs text-slate-500">
@@ -306,6 +314,8 @@ export default function StaffPage() {
                       initialWage={m.hourly_wage}
                       initialPosition={m.position ?? ""}
                       canChangeRole={isOwner}
+                      isFounder={isFounder}
+                      targetIsFounder={m.user_id === ownerId}
                       onSaved={load}
                     />
                   </div>

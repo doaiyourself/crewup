@@ -230,7 +230,7 @@ export default function OnboardingPage() {
               type="date"
               value={openDate}
               onChange={(e) => setOpenDate(e.target.value)}
-              className="input"
+              className="input dateinput"
             />
           </Field>
           <Field label="매장 주소">
@@ -351,7 +351,7 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      <style>{`.input{width:100%;border:1px solid #e2e8f0;border-radius:0.75rem;padding:0.625rem 0.75rem;font-size:0.875rem;outline:none}.input:focus{border-color:#2F6BFF}`}</style>
+      <style>{`.input{width:100%;border:1px solid #e2e8f0;border-radius:0.75rem;padding:0.625rem 0.75rem;font-size:0.875rem;outline:none}.input:focus{border-color:#2F6BFF}.dateinput{-webkit-appearance:none;appearance:none;background-color:#fff;color:#0f172a;text-align:left;padding-left:2.5rem;background-repeat:no-repeat;background-position:left 0.75rem center;background-size:18px 18px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4.5' width='18' height='17' rx='2.5'/%3E%3Cpath d='M3 9h18M8 3v4M16 3v4'/%3E%3C/svg%3E")}.dateinput::-webkit-date-and-time-value{text-align:left}.dateinput::-webkit-calendar-picker-indicator{margin-left:auto}`}</style>
     </main>
   );
 }

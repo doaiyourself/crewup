@@ -29,6 +29,7 @@ export interface Membership {
   storeStatus: "pending" | "active" | "suspended";
   role: Role;
   position: string;
+  ownerId: string | null; // 매장 최초 대표(founder)의 user_id
 }
 
 interface SessionValue {
@@ -103,6 +104,7 @@ function DemoSession({ children }: { children: ReactNode }) {
           storeStatus: "active",
           role: base.role,
           position: base.position,
+          ownerId: base.role === "owner" ? base.id : "acc-owner",
         },
       ]
     : [];
@@ -167,7 +169,7 @@ function SupabaseSession({ children }: { children: ReactNode }) {
 
       const { data: rows } = await supabase
         .from("memberships")
-        .select("role, position, store_id, stores(name, join_code, status)")
+        .select("role, position, store_id, stores(name, join_code, status, owner_id)")
         .eq("user_id", user.id)
         .eq("status", "active");
 
@@ -178,6 +180,7 @@ function SupabaseSession({ children }: { children: ReactNode }) {
         storeStatus: (r.stores?.status ?? "pending") as Membership["storeStatus"],
         role: r.role as Role,
         position: r.position ?? "",
+        ownerId: r.stores?.owner_id ?? null,
       }));
       setMemberships(list);
 

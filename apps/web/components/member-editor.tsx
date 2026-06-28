@@ -25,6 +25,8 @@ export function MemberEditor({
   initialRole,
   initialWage,
   canChangeRole,
+  isFounder = false,
+  targetIsFounder = false,
   onSaved,
 }: {
   storeId: string;
@@ -33,6 +35,8 @@ export function MemberEditor({
   initialWage: number;
   initialPosition: string;
   canChangeRole: boolean;
+  isFounder?: boolean; // 현재 로그인이 최초 대표인가 (공동 사장 지정 권한)
+  targetIsFounder?: boolean; // 이 멤버가 최초 대표인가 (변경 불가)
   onSaved: () => void;
 }) {
   const [role, setRole] = useState<Role>(initialRole);
@@ -40,11 +44,19 @@ export function MemberEditor({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const isOwnerMember = initialRole === "owner";
-  const targetIsAdmin = initialRole === "owner" || initialRole === "manager";
-  // 관리자(사장/점장) 계정은 사장님만 관리 가능 (백엔드 트리거와 일치).
-  // canChangeRole=true 는 현재 로그인이 사장님일 때만 전달된다.
-  const locked = !canChangeRole && targetIsAdmin;
+  const targetIsOwner = initialRole === "owner";
+  // 직책 변경 가능 여부 (백엔드 트리거와 일치)
+  // - 대표 계정: 누구도 변경 불가
+  // - 공동 사장 계정: 대표(founder)만 관리
+  // - 점장 계정: 사장(공동 포함)만 관리
+  const lockedReason = targetIsFounder
+    ? "대표 계정은 변경할 수 없어요."
+    : targetIsOwner && !isFounder
+    ? "공동 사장 계정은 대표만 관리할 수 있어요."
+    : !canChangeRole && initialRole === "manager"
+    ? "점장 계정은 사장님만 관리할 수 있어요."
+    : "";
+  const locked = !!lockedReason;
 
   const save = async () => {
     setSaving(true);
@@ -52,7 +64,7 @@ export function MemberEditor({
     const supabase = createClient();
     const patch: any = { hourly_wage: wage };
     // 직책(역할) 변경 가능 시: role + 직책 라벨 동기화
-    if (canChangeRole && !isOwnerMember) {
+    if (canChangeRole) {
       patch.role = role;
       patch.position = ROLE_LABEL_MAP[role];
     }
@@ -91,7 +103,7 @@ export function MemberEditor({
   if (locked) {
     return (
       <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
-        관리자(사장님·점장) 계정은 <b>사장님만</b> 관리할 수 있어요.
+        {lockedReason}
       </p>
     );
   }
@@ -106,25 +118,32 @@ export function MemberEditor({
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as Role)}
-          disabled={isOwnerMember || !canChangeRole}
+          disabled={!canChangeRole}
           className="me-i"
         >
           {ROLE_OPTS.map((o) => (
             <option
               key={o.key}
               value={o.key}
-              disabled={o.key === "owner" && !isOwnerMember}
+              // '사장(공동대표)' 지정은 대표(founder)만
+              disabled={o.key === "owner" && !isFounder}
             >
-              {o.label}
+              {o.key === "owner" ? "사장 (공동대표)" : o.label}
             </option>
           ))}
         </select>
-        {(isOwnerMember || !canChangeRole) && (
+        {!canChangeRole ? (
           <span className="mt-1 block text-[11px] text-slate-400">
-            {isOwnerMember
-              ? "사장님 계정은 직책을 변경할 수 없어요."
-              : "직책 변경은 사장님만 가능해요."}
+            직책 변경은 사장님만 가능해요.
           </span>
+        ) : (
+          isFounder &&
+          !targetIsOwner && (
+            <span className="mt-1 block text-[11px] text-slate-400">
+              ‘사장(공동대표)’으로 지정하면 발주·승인 등 사장 권한을 함께
+              갖습니다.
+            </span>
+          )
         )}
       </label>
 
@@ -155,7 +174,7 @@ export function MemberEditor({
         >
           {saving ? "저장 중…" : saved ? "저장됨 ✓" : "저장"}
         </button>
-        {!isOwnerMember && (
+        {!targetIsOwner && (
           <button
             onClick={resign}
             className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-500"
