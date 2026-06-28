@@ -46,6 +46,10 @@ function dateLabel(ymd: string) {
   const [y, m, d] = ymd.split("-").map(Number);
   return `${m}/${d} (${DOW[new Date(y, m - 1, d).getDay()]})`;
 }
+function dateParts(ymd: string) {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return { m, d, dow: DOW[new Date(y, m - 1, d).getDay()] };
+}
 function toTimeInput(iso: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -561,18 +565,24 @@ export default function AdminAttendancePage() {
             {shownRows.map((r) => (
               <Card key={r.id}>
                 <div className="flex items-center gap-3">
-                  <Avatar name={r.name} color={r.avatar_color} />
+                  {/* 날짜 — 가장 크게, 왼쪽 */}
+                  <div className="flex w-16 shrink-0 flex-col items-center border-r border-slate-100 pr-3">
+                    <span className="text-[28px] font-extrabold leading-none text-slate-900">
+                      {dateParts(r.work_date).d}
+                    </span>
+                    <span className="mt-1 text-[11px] font-medium text-slate-400">
+                      {dateParts(r.work_date).m}월 ({dateParts(r.work_date).dow})
+                    </span>
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Avatar name={r.name} color={r.avatar_color} size={22} />
                       <p className="font-semibold text-slate-900">{r.name}</p>
-                      <span className="text-xs text-slate-400">
-                        {dateLabel(r.work_date)}
-                      </span>
                       <span className={`text-xs font-semibold ${statusCls(r.status)}`}>
                         {statusLabel(r.status)}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-500">
                       출근 {toTimeInput(r.clock_in_at) || "--:--"} · 퇴근{" "}
                       {toTimeInput(r.clock_out_at) || "--:--"}
                     </p>
