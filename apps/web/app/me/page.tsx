@@ -12,6 +12,7 @@ import {
 } from "@/lib/mock-data";
 import { todayLabel, shiftHours, won, netPay } from "@/lib/format";
 import { PageHeader, Card, Avatar, AccountBadge } from "@/components/ui";
+import { AttendanceRequest } from "@/components/attendance-request";
 
 function hhmm(iso: string | null): string {
   if (!iso) return "--:--";
@@ -112,6 +113,12 @@ export default function MeHome() {
             </p>
           )}
         </Card>
+
+        {/* 근무시간 수정·추가 요청 */}
+        <AttendanceRequest
+          storeId={currentStoreId ?? ""}
+          userId={account.id}
+        />
 
         {/* 요약 2개 */}
         <div className="mt-3 grid grid-cols-2 gap-3">

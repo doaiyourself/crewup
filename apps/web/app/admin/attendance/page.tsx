@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader, Card, Avatar, AccountBadge } from "@/components/ui";
+import { AttendanceRequest } from "@/components/attendance-request";
 
 const STATUS: { key: string; label: string; cls: string }[] = [
   { key: "normal", label: "정상", cls: "text-green-600" },
@@ -24,6 +25,18 @@ interface Row {
   clock_out_at: string | null;
   status: string;
   approved_by: string | null;
+  name: string;
+  avatar_color: string;
+}
+
+interface ReqRow {
+  id: string;
+  user_id: string;
+  kind: string;
+  work_date: string;
+  clock_in_at: string | null;
+  clock_out_at: string | null;
+  reason: string | null;
   name: string;
   avatar_color: string;
 }
@@ -64,6 +77,7 @@ function localYmd(): string {
 export default function AdminAttendancePage() {
   const { currentStoreId, account } = useSession();
   const [rows, setRows] = useState<Row[]>([]);
+  const [requests, setRequests] = useState<ReqRow[]>([]);
   const [sched, setSched] = useState<Map<string, { start: string; end: string }>>(
     new Map()
   );
@@ -95,27 +109,40 @@ export default function AdminAttendancePage() {
     }
     const supabase = createClient();
     const since = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
-    const [{ data: memberData }, { data: att }, { data: schedules }, { data: storeRow }] =
-      await Promise.all([
-        supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
-        supabase
-          .from("attendance")
-          .select(
-            "id, user_id, work_date, clock_in_at, clock_out_at, status, approved_by"
-          )
-          .eq("store_id", currentStoreId)
-          .gte("work_date", since)
-          .order("work_date", { ascending: false }),
-        supabase
-          .from("schedules")
-          .select("user_id, day_of_week, start_time, end_time")
-          .eq("store_id", currentStoreId),
-        supabase
-          .from("stores")
-          .select("attendance_delegated")
-          .eq("id", currentStoreId)
-          .maybeSingle(),
-      ]);
+    const [
+      { data: memberData },
+      { data: att },
+      { data: schedules },
+      { data: storeRow },
+      { data: reqData },
+    ] = await Promise.all([
+      supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
+      supabase
+        .from("attendance")
+        .select(
+          "id, user_id, work_date, clock_in_at, clock_out_at, status, approved_by"
+        )
+        .eq("store_id", currentStoreId)
+        .gte("work_date", since)
+        .order("work_date", { ascending: false }),
+      supabase
+        .from("schedules")
+        .select("user_id, day_of_week, start_time, end_time")
+        .eq("store_id", currentStoreId),
+      supabase
+        .from("stores")
+        .select("attendance_delegated")
+        .eq("id", currentStoreId)
+        .maybeSingle(),
+      supabase
+        .from("attendance_requests")
+        .select(
+          "id, user_id, kind, work_date, clock_in_at, clock_out_at, reason"
+        )
+        .eq("store_id", currentStoreId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
+    ]);
     const memArr = ((memberData as any[]) ?? [])
       .filter((m) => m.status === "active")
       .map((m) => ({ user_id: m.user_id, name: m.name, avatar_color: m.avatar_color }));
@@ -140,8 +167,29 @@ export default function AdminAttendancePage() {
         avatar_color: nameMap.get(r.user_id)?.color ?? "#94a3b8",
       }))
     );
+    setRequests(
+      ((reqData as any[]) ?? []).map((r) => ({
+        ...r,
+        name: nameMap.get(r.user_id)?.name ?? "직원",
+        avatar_color: nameMap.get(r.user_id)?.color ?? "#94a3b8",
+      }))
+    );
     setLoading(false);
   }, [currentStoreId]);
+
+  // 수정·추가 요청 처리 (승인 시 출퇴근 기록에 반영)
+  const reviewRequest = async (id: string, approve: boolean) => {
+    const supabase = createClient();
+    const { error } = await supabase.rpc("review_attendance_request", {
+      p_request_id: id,
+      p_approve: approve,
+    });
+    if (error) {
+      alert("처리에 실패했어요. 권한을 확인해 주세요.");
+      return;
+    }
+    await load();
+  };
 
   useEffect(() => {
     load();
@@ -237,11 +285,75 @@ export default function AdminAttendancePage() {
     <>
       <PageHeader
         title="출퇴근 승인"
-        subtitle={`최근 2주 · 미승인 ${pending}건`}
+        subtitle={
+          requests.length > 0
+            ? `요청 ${requests.length}건 · 미승인 ${pending}건`
+            : `최근 2주 · 미승인 ${pending}건`
+        }
         right={<AccountBadge light />}
       />
 
       <div className="px-4 pt-4">
+        {/* 수정·추가 요청 검토 (사장/위임 점장) */}
+        {canManage && requests.length > 0 && (
+          <div className="mb-3">
+            <h2 className="mb-2 px-1 text-sm font-bold text-slate-700">
+              수정·추가 요청 {requests.length}건
+            </h2>
+            <div className="space-y-2">
+              {requests.map((q) => (
+                <Card key={q.id} className="!bg-blue-50/50 !ring-blue-100">
+                  <div className="flex items-center gap-3">
+                    <Avatar name={q.name} color={q.avatar_color} size={36} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-semibold text-slate-900">{q.name}</p>
+                        <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold text-brand ring-1 ring-blue-100">
+                          {q.kind === "edit" ? "수정" : "추가"}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {dateLabel(q.work_date)}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-600">
+                        출근 {toTimeInput(q.clock_in_at) || "--:--"} · 퇴근{" "}
+                        {toTimeInput(q.clock_out_at) || "--:--"}
+                      </p>
+                      {q.reason && (
+                        <p className="mt-0.5 text-[11px] text-slate-400">
+                          “{q.reason}”
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => reviewRequest(q.id, true)}
+                      className="flex-1 rounded-xl bg-brand py-2 text-sm font-bold text-white transition active:scale-[0.98]"
+                    >
+                      승인
+                    </button>
+                    <button
+                      onClick={() => reviewRequest(q.id, false)}
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-500 transition active:scale-[0.98]"
+                    >
+                      거절
+                    </button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 점장 본인 근무 수정·추가 요청 (위임 안 받은 경우) */}
+        {account?.role === "manager" && !canManage && (
+          <AttendanceRequest
+            storeId={currentStoreId ?? ""}
+            userId={account.id}
+          />
+        )}
+
         {/* 출퇴근 직접 추가 (사장 항상 · 점장은 위임 시) */}
         {canManage ? (
           <>
