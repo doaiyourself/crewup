@@ -6,6 +6,7 @@ import { useSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import { won } from "@/lib/format";
 import { CONTRACT_STATUS_LABEL, type ContractContent } from "@/lib/contract";
+import { isAdminRole } from "@/lib/mock-data";
 
 interface Contract {
   id: string;
@@ -14,6 +15,7 @@ interface Contract {
   status: "none" | "pending" | "signed" | "expired";
   content: ContractContent;
   signed_at: string | null;
+  employer_signed_at: string | null;
 }
 
 function Item({ label, value }: { label: string; value: string }) {
@@ -41,7 +43,9 @@ export default function ContractPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("contracts")
-      .select("id, store_id, user_id, status, content, signed_at")
+      .select(
+        "id, store_id, user_id, status, content, signed_at, employer_signed_at"
+      )
       .eq("id", id)
       .maybeSingle();
     if (data) {
@@ -60,6 +64,7 @@ export default function ContractPage() {
     load();
   }, [load]);
 
+  // 근로자 서명 (사장 서명 이후에만 가능) → 계약 완료
   const sign = async () => {
     if (!agree || !contract) return;
     setSigning(true);
@@ -70,6 +75,21 @@ export default function ContractPage() {
       .eq("id", contract.id);
     await load();
     setSigning(false);
+    setAgree(false);
+  };
+
+  // 사용자(사장) 서명 — 가장 먼저 진행
+  const signEmployer = async () => {
+    if (!agree || !contract) return;
+    setSigning(true);
+    const supabase = createClient();
+    await supabase
+      .from("contracts")
+      .update({ employer_signed_at: new Date().toISOString() })
+      .eq("id", contract.id);
+    await load();
+    setSigning(false);
+    setAgree(false);
   };
 
   if (loading || !ready) {
@@ -95,7 +115,13 @@ export default function ContractPage() {
 
   const c = contract.content;
   const isWorker = account?.id === contract.user_id;
-  const canSign = isWorker && contract.status === "pending";
+  const isEmployer = !isWorker && isAdminRole(account?.role ?? "parttimer");
+  const employerSigned = !!contract.employer_signed_at;
+  // 서명 순서: 사장(사용자) 먼저 → 근로자
+  const canEmployerSign =
+    isEmployer && contract.status === "pending" && !employerSigned;
+  const canWorkerSign =
+    isWorker && contract.status === "pending" && employerSigned;
   const wageLabel =
     c.wageType === "hourly" ? `시급 ${won(c.wage)}` : `월급 ${won(c.wage)}`;
 
@@ -170,22 +196,61 @@ export default function ContractPage() {
           <div className="rounded-xl border border-slate-200 p-3">
             <p className="text-xs text-slate-400">사용자</p>
             <p className="mt-1 font-semibold text-slate-800">{c.employerName}</p>
-            <p className="mt-2 text-xs text-slate-400">(인)</p>
+            <p
+              className={`mt-2 text-xs ${
+                employerSigned ? "text-green-600" : "text-slate-400"
+              }`}
+            >
+              {employerSigned
+                ? `✓ 전자서명 ${new Date(
+                    contract.employer_signed_at!
+                  ).toLocaleString("ko-KR")}`
+                : "(서명 대기)"}
+            </p>
           </div>
           <div className="rounded-xl border border-slate-200 p-3">
             <p className="text-xs text-slate-400">근로자</p>
             <p className="mt-1 font-semibold text-slate-800">{c.employeeName}</p>
-            <p className="mt-2 text-xs text-slate-400">
+            <p
+              className={`mt-2 text-xs ${
+                contract.status === "signed" ? "text-green-600" : "text-slate-400"
+              }`}
+            >
               {contract.status === "signed" && contract.signed_at
                 ? `✓ 전자서명 ${new Date(contract.signed_at).toLocaleString("ko-KR")}`
-                : "(서명 대기)"}
+                : employerSigned
+                ? "(서명 대기)"
+                : "(사장님 서명 후 진행)"}
             </p>
           </div>
         </div>
       </div>
 
-      {/* 서명 액션 (근로자, 인쇄 시 숨김) */}
-      {canSign && (
+      {/* 서명 액션 (인쇄 시 숨김) — 사장 먼저, 그 다음 근로자 */}
+      {canEmployerSign && (
+        <div className="sticky bottom-0 border-t border-slate-100 bg-white px-6 py-4 print:hidden">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+            />
+            사용자(대표)로서 위 근로계약 내용에 동의합니다.
+          </label>
+          <button
+            onClick={signEmployer}
+            disabled={!agree || signing}
+            className="mt-3 w-full rounded-xl bg-brand py-3.5 text-base font-bold text-white transition active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400"
+          >
+            {signing ? "서명 중…" : "사용자(대표) 전자서명"}
+          </button>
+          <p className="mt-2 text-center text-xs text-slate-400">
+            사장님이 먼저 서명하면 근로자가 서명할 수 있어요.
+          </p>
+        </div>
+      )}
+
+      {canWorkerSign && (
         <div className="sticky bottom-0 border-t border-slate-100 bg-white px-6 py-4 print:hidden">
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
@@ -202,6 +267,13 @@ export default function ContractPage() {
           >
             {signing ? "서명 중…" : "동의하고 전자서명"}
           </button>
+        </div>
+      )}
+
+      {/* 근로자인데 아직 사장 서명 전 */}
+      {isWorker && contract.status === "pending" && !employerSigned && (
+        <div className="sticky bottom-0 border-t border-slate-100 bg-white px-6 py-4 text-center text-sm text-slate-500 print:hidden">
+          사장님의 서명을 기다리고 있어요. 서명이 완료되면 알려드릴게요.
         </div>
       )}
     </main>
