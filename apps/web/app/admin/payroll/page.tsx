@@ -15,6 +15,7 @@ interface Line {
   color: string;
   wage: number;
   minutes: number;
+  weeklyIncluded: boolean; // 계약서상 주휴수당 시급 포함
 }
 
 function minutesBetween(a: string | null, b: string | null): number {
@@ -38,14 +39,20 @@ export default function AdminPayrollPage() {
     }
     const supabase = createClient();
     const monthStart = new Date().toISOString().slice(0, 8) + "01";
-    const [{ data: members }, { data: att }] = await Promise.all([
-      supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
-      supabase
-        .from("attendance")
-        .select("user_id, clock_in_at, clock_out_at")
-        .eq("store_id", currentStoreId)
-        .gte("work_date", monthStart),
-    ]);
+    const [{ data: members }, { data: att }, { data: contracts }] =
+      await Promise.all([
+        supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
+        supabase
+          .from("attendance")
+          .select("user_id, clock_in_at, clock_out_at")
+          .eq("store_id", currentStoreId)
+          .gte("work_date", monthStart),
+        supabase
+          .from("contracts")
+          .select("user_id, content, created_at")
+          .eq("store_id", currentStoreId)
+          .order("created_at", { ascending: false }),
+      ]);
     setCachedMembers(currentStoreId, (members as any[]) ?? []);
     const minByUser = new Map<string, number>();
     ((att as any[]) ?? []).forEach((r) =>
@@ -55,6 +62,12 @@ export default function AdminPayrollPage() {
           minutesBetween(r.clock_in_at, r.clock_out_at)
       )
     );
+    // 직원별 최신 계약서의 '주휴수당 시급 포함' 여부
+    const inclByUser = new Map<string, boolean>();
+    ((contracts as any[]) ?? []).forEach((c) => {
+      if (!inclByUser.has(c.user_id))
+        inclByUser.set(c.user_id, !!c.content?.weeklyHolidayIncluded);
+    });
     setLines(
       ((members as any[]) ?? []).map((m) => ({
         user_id: m.user_id,
@@ -62,6 +75,7 @@ export default function AdminPayrollPage() {
         color: m.avatar_color,
         wage: m.hourly_wage,
         minutes: minByUser.get(m.user_id) ?? 0,
+        weeklyIncluded: inclByUser.get(m.user_id) ?? false,
       }))
     );
     setLoading(false);
@@ -71,7 +85,10 @@ export default function AdminPayrollPage() {
     load();
   }, [load]);
 
-  const computed = lines.map((l) => ({ ...l, pay: computePayroll(l.minutes, l.wage) }));
+  const computed = lines.map((l) => ({
+    ...l,
+    pay: computePayroll(l.minutes, l.wage, 0, l.weeklyIncluded),
+  }));
   const totalGross = computed.reduce((a, c) => a + c.pay.gross, 0);
   const totalNet = computed.reduce((a, c) => a + c.pay.net, 0);
 
@@ -112,7 +129,7 @@ export default function AdminPayrollPage() {
                       <p className="font-semibold text-slate-900">{c.name}</p>
                       <p className="mt-0.5 text-xs text-slate-500">
                         {c.pay.totalHours}시간 · {won(c.wage)}/h · 주휴{" "}
-                        {wonShort(c.pay.weeklyAllowance)}
+                        {c.weeklyIncluded ? "포함" : wonShort(c.pay.weeklyAllowance)}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">

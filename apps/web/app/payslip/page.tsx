@@ -64,6 +64,7 @@ function PayslipInner() {
   const [name, setName] = useState("");
   const [wage, setWage] = useState<number | null>(null);
   const [minutes, setMinutes] = useState(0);
+  const [weeklyIncl, setWeeklyIncl] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -90,6 +91,17 @@ function PayslipInner() {
       .eq("user_id", targetUser)
       .maybeSingle();
     setWage(mem?.hourly_wage ?? null);
+
+    // 계약서상 주휴수당 시급 포함 여부 (최신)
+    const { data: ctr } = await supabase
+      .from("contracts")
+      .select("content")
+      .eq("store_id", currentStoreId)
+      .eq("user_id", targetUser)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setWeeklyIncl(!!(ctr?.content as any)?.weeklyHolidayIncluded);
 
     // 근무시간
     const { data: att } = await supabase
@@ -121,7 +133,7 @@ function PayslipInner() {
   }
 
   const p: PayrollResult | null =
-    wage != null ? computePayroll(minutes, wage) : null;
+    wage != null ? computePayroll(minutes, wage, 0, weeklyIncl) : null;
   const [py, pm] = period.split("-");
 
   return (
@@ -171,7 +183,10 @@ function PayslipInner() {
             <h2 className="mb-1 mt-6 text-sm font-bold text-slate-500">지급 내역</h2>
             <div className="overflow-hidden rounded-xl border border-slate-100">
               <PayRow label={`기본급 (${p.totalHours}시간 × ${won(wage!)})`} value={won(p.basePay)} />
-              <PayRow label="주휴수당" value={won(p.weeklyAllowance)} />
+              <PayRow
+                label="주휴수당"
+                value={weeklyIncl ? "시급 포함" : won(p.weeklyAllowance)}
+              />
               <PayRow label="야간·연장 가산" value={won(p.nightAllowance)} />
               <PayRow label="지급 합계" value={won(p.gross)} strong />
             </div>

@@ -12,6 +12,7 @@ export interface ContractContent {
   wageType: "hourly" | "monthly";
   wage: number; // 시급 또는 월급
   weeklyHoliday: boolean; // 주휴수당 지급
+  weeklyHolidayIncluded?: boolean; // 주휴수당이 시급(임금)에 포함됨 (포괄)
   insurance: boolean; // 4대보험 가입
   payday: string; // 임금 지급일 (예: 매월 10일)
   employerName: string; // 사용자(대표) 성명
@@ -45,6 +46,7 @@ export function defaultContract(opts: {
     wageType: "hourly",
     wage: opts.wage,
     weeklyHoliday: true,
+    weeklyHolidayIncluded: false,
     insurance: true,
     payday: "매월 10일",
     employerName: opts.employerName,

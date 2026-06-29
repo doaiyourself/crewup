@@ -180,7 +180,16 @@ export default function ContractPage() {
             />
             <Item label="임금" value={wageLabel} />
             <Item label="임금지급일" value={c.payday} />
-            <Item label="주휴수당" value={c.weeklyHoliday ? "지급" : "미지급"} />
+            <Item
+              label="주휴수당"
+              value={
+                c.weeklyHoliday
+                  ? c.weeklyHolidayIncluded
+                    ? "지급 (시급에 포함)"
+                    : "지급"
+                  : "미지급"
+              }
+            />
             <Item label="4대보험" value={c.insurance ? "가입" : "미가입"} />
           </tbody>
         </table>

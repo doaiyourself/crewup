@@ -46,23 +46,40 @@ export default function MyPayrollPage() {
   const { account, currentStoreId } = useSession();
   const { stats, loading } = useMyAttendance(currentStoreId);
   const [wage, setWage] = useState<number | null>(null);
+  const [weeklyIncl, setWeeklyIncl] = useState(false);
 
   useEffect(() => {
     if (!currentStoreId || currentStoreId === "demo-store" || !account) return;
     const supabase = createClient();
-    supabase
-      .from("memberships")
-      .select("hourly_wage")
-      .eq("store_id", currentStoreId)
-      .eq("user_id", account.id)
-      .maybeSingle()
-      .then(({ data }) => setWage(data?.hourly_wage ?? null));
+    const uid = account.id;
+    (async () => {
+      const [{ data: m }, { data: c }] = await Promise.all([
+        supabase
+          .from("memberships")
+          .select("hourly_wage")
+          .eq("store_id", currentStoreId)
+          .eq("user_id", uid)
+          .maybeSingle(),
+        supabase
+          .from("contracts")
+          .select("content")
+          .eq("store_id", currentStoreId)
+          .eq("user_id", uid)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      setWage(m?.hourly_wage ?? null);
+      setWeeklyIncl(!!(c?.content as any)?.weeklyHolidayIncluded);
+    })();
   }, [currentStoreId, account]);
 
   if (!account) return null;
 
   const p: PayrollResult | null =
-    wage != null ? computePayroll(stats.totalMinutes, wage) : null;
+    wage != null
+      ? computePayroll(stats.totalMinutes, wage, 0, weeklyIncl)
+      : null;
 
   return (
     <>
@@ -88,7 +105,10 @@ export default function MyPayrollPage() {
             </h2>
             <Card className="!py-2">
               <Row label="기본급" value={won(p.basePay)} />
-              <Row label="주휴수당" value={won(p.weeklyAllowance)} />
+              <Row
+                label="주휴수당"
+                value={weeklyIncl ? "시급 포함" : won(p.weeklyAllowance)}
+              />
               <Row label="야간·연장 가산" value={won(p.nightAllowance)} />
               <div className="border-t border-slate-100" />
               <Row label="지급 합계" value={won(p.gross)} strong />

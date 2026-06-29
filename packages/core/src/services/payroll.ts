@@ -14,12 +14,16 @@ export interface PayrollResult {
 export function computePayroll(
   minutes: number,
   hourlyWage: number,
-  nightMinutes = 0
+  nightMinutes = 0,
+  // 주휴수당이 이미 시급(임금)에 포함된 계약이면 별도 가산하지 않음 (포괄)
+  weeklyIncluded = false
 ): PayrollResult {
   const totalHours = Math.round((minutes / 60) * 10) / 10;
   const basePay = Math.round((minutes / 60) * hourlyWage);
-  // 주휴수당: 주 15시간 이상 근무 시 통상 ~8.3% 수준 (간이 추정)
-  const weeklyAllowance = totalHours >= 15 ? Math.round(basePay * 0.083) : 0;
+  // 주휴수당: 주 15시간 이상 근무 시 통상 ~8.3% 수준 (간이 추정).
+  // 단, 시급에 포함된 계약이면 0 (기본급에 이미 반영됨).
+  const weeklyAllowance =
+    weeklyIncluded || totalHours < 15 ? 0 : Math.round(basePay * 0.083);
   // 야간 가산 50%
   const nightAllowance = Math.round((nightMinutes / 60) * hourlyWage * 0.5);
   const gross = basePay + weeklyAllowance + nightAllowance;

@@ -222,6 +222,47 @@ export function ContractManager({
           />
         </Field>
       </div>
+      {/* 주휴수당 (시급 아래) */}
+      <div className="space-y-1.5 rounded-lg bg-slate-50 px-3 py-2.5">
+        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+          <input
+            type="checkbox"
+            checked={form.weeklyHoliday}
+            onChange={(e) =>
+              set({
+                weeklyHoliday: e.target.checked,
+                weeklyHolidayIncluded: e.target.checked
+                  ? form.weeklyHolidayIncluded
+                  : false,
+              })
+            }
+          />
+          주휴수당 지급
+        </label>
+        <label
+          className={`flex items-center gap-1.5 text-xs ${
+            form.weeklyHoliday ? "text-slate-600" : "text-slate-300"
+          }`}
+        >
+          <input
+            type="checkbox"
+            disabled={!form.weeklyHoliday}
+            checked={!!form.weeklyHolidayIncluded}
+            onChange={(e) =>
+              set({
+                weeklyHolidayIncluded: e.target.checked,
+                weeklyHoliday: e.target.checked ? true : form.weeklyHoliday,
+              })
+            }
+          />
+          주휴수당 시급에 포함 (포괄)
+        </label>
+        {form.weeklyHolidayIncluded && (
+          <p className="text-[11px] leading-relaxed text-slate-400">
+            시급에 주휴수당이 포함돼, 급여 계산 시 주휴수당을 따로 더하지 않아요.
+          </p>
+        )}
+      </div>
       <Field label="임금 지급일">
         <input
           value={form.payday}
@@ -230,14 +271,6 @@ export function ContractManager({
         />
       </Field>
       <div className="flex gap-4 py-1">
-        <label className="flex items-center gap-1.5 text-xs text-slate-600">
-          <input
-            type="checkbox"
-            checked={form.weeklyHoliday}
-            onChange={(e) => set({ weeklyHoliday: e.target.checked })}
-          />
-          주휴수당
-        </label>
         <label className="flex items-center gap-1.5 text-xs text-slate-600">
           <input
             type="checkbox"
