@@ -148,7 +148,7 @@ export function ContractManager({
           className="ci"
         />
         <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {["음료 제조", "홀 서빙", "매장 청소"].map((ex) => (
+          {["음료 제조", "홀 서빙", "매장 청소", "매장 관리"].map((ex) => (
             <button
               key={ex}
               type="button"
@@ -280,6 +280,36 @@ export function ContractManager({
           4대보험
         </label>
       </div>
+      <Field label="비고 (특약)">
+        <textarea
+          value={form.note ?? ""}
+          onChange={(e) => set({ note: e.target.value })}
+          placeholder="추가 약정 사항을 입력하세요 (선택)"
+          rows={3}
+          className="ci !h-auto py-2 leading-relaxed"
+        />
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {[
+            {
+              key: "영업비밀 보호",
+              text: "근로자는 매장의 모든 레시피 및 영업비밀을 외부에 유출하거나 개인적으로 이용하지 않으며, 이 의무는 퇴직 후에도 계속됩니다.",
+            },
+          ].map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => {
+                const cur = (form.note ?? "").trim();
+                if (cur.includes(c.text)) return;
+                set({ note: cur ? `${cur}\n${c.text}` : c.text });
+              }}
+              className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 transition active:scale-95"
+            >
+              + {c.key}
+            </button>
+          ))}
+        </div>
+      </Field>
           <button
             onClick={issue}
             disabled={saving}

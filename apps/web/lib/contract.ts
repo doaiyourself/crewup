@@ -15,6 +15,7 @@ export interface ContractContent {
   weeklyHolidayIncluded?: boolean; // 주휴수당이 시급(임금)에 포함됨 (포괄)
   insurance: boolean; // 4대보험 가입
   payday: string; // 임금 지급일 (예: 매월 10일)
+  note?: string; // 비고 (특약·영업비밀 보호 등)
   employerName: string; // 사용자(대표) 성명
   employeeName: string; // 근로자 성명 (발행 시점 스냅샷)
 }

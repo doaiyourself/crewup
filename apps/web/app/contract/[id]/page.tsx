@@ -191,6 +191,16 @@ export default function ContractPage() {
               }
             />
             <Item label="4대보험" value={c.insurance ? "가입" : "미가입"} />
+            {c.note && (
+              <tr className="border-b border-slate-100">
+                <th className="w-32 bg-slate-50 px-3 py-2.5 text-left align-top text-xs font-semibold text-slate-500">
+                  비고
+                </th>
+                <td className="whitespace-pre-line px-3 py-2.5 text-sm leading-relaxed text-slate-800">
+                  {c.note}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
 
