@@ -62,6 +62,12 @@ export function ContractManager({
   }, [storeId, userId]);
 
   const issue = async () => {
+    if (
+      !confirm(
+        "대표자(사용자)로서 위 계약 내용에 동의하고 발행할까요?\n발행 즉시 대표 서명이 완료되고, 근로자에게 서명이 요청됩니다."
+      )
+    )
+      return;
     setSaving(true);
     const supabase = createClient();
     const { data } = await supabase
@@ -72,6 +78,8 @@ export function ContractManager({
         status: "pending",
         content: form,
         expires_at: form.endDate || null,
+        // 발행 = 대표 서명 완료 (근로자 서명만 남김)
+        employer_signed_at: new Date().toISOString(),
       })
       .select("id, status")
       .single();
@@ -315,7 +323,7 @@ export function ContractManager({
             disabled={saving}
             className="w-full rounded-lg bg-brand py-2 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-60"
           >
-            {saving ? "발행 중…" : "계약서 발행 (서명 요청)"}
+            {saving ? "발행 중…" : "대표 서명하고 발행 (근로자 서명 요청)"}
           </button>
           {contract && showForm && (
             <button

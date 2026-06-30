@@ -9,6 +9,7 @@ import { PageHeader, Card, Avatar, AccountBadge } from "@/components/ui";
 import { ScheduleEditor } from "@/components/schedule-editor";
 import { ContractManager } from "@/components/contract-manager";
 import { MemberEditor } from "@/components/member-editor";
+import { BankAccount } from "@/components/bank-account";
 import { KakaoShareButton } from "@/components/kakao-share";
 import { HealthCerts } from "@/components/health-certs";
 import {
@@ -51,6 +52,8 @@ export default function StaffPage() {
   const [contractFor, setContractFor] = useState<string | null>(null);
   const [editFor, setEditFor] = useState<string | null>(null);
   const [certFor, setCertFor] = useState<string | null>(null);
+  const [contractUsers, setContractUsers] = useState<Set<string>>(new Set());
+  const [healthUsers, setHealthUsers] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     if (!currentStoreId || currentStoreId === "demo-store") {
@@ -58,12 +61,19 @@ export default function StaffPage() {
       return;
     }
     const supabase = createClient();
-    const { data } = await supabase.rpc("list_store_members", {
-      p_store_id: currentStoreId,
-    });
+    const [{ data }, { data: ctr }, { data: hc }] = await Promise.all([
+      supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
+      supabase.from("contracts").select("user_id").eq("store_id", currentStoreId),
+      supabase
+        .from("health_certs")
+        .select("user_id")
+        .eq("store_id", currentStoreId),
+    ]);
     const arr = (data as Member[]) ?? [];
     setMembers(arr);
     setCachedMembers(currentStoreId, arr as any);
+    setContractUsers(new Set(((ctr as any[]) ?? []).map((r) => r.user_id)));
+    setHealthUsers(new Set(((hc as any[]) ?? []).map((r) => r.user_id)));
     setLoading(false);
   }, [currentStoreId]);
 
@@ -197,7 +207,12 @@ export default function StaffPage() {
           </Card>
         ) : (
           <div className="space-y-2.5">
-            {list.map((m) => (
+            {list.map((m) => {
+              const needContract =
+                m.role !== "owner" && !contractUsers.has(m.user_id);
+              const needHealth =
+                m.role !== "owner" && !healthUsers.has(m.user_id);
+              return (
               <Card key={m.user_id}>
                 <div className="flex items-center gap-3">
                   <Avatar name={m.name} color={m.avatar_color} />
@@ -249,10 +264,12 @@ export default function StaffPage() {
                       className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
                         contractFor === m.user_id
                           ? "bg-brand text-white"
+                          : needContract
+                          ? "bg-amber-100 text-amber-700"
                           : "bg-slate-100 text-slate-600"
                       }`}
                     >
-                      계약서
+                      계약서{needContract ? " !" : ""}
                     </button>
                     <button
                       onClick={() => {
@@ -280,10 +297,12 @@ export default function StaffPage() {
                         className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
                           certFor === m.user_id
                             ? "bg-brand text-white"
+                            : needHealth
+                            ? "bg-amber-100 text-amber-700"
                             : "bg-slate-100 text-slate-600"
                         }`}
                       >
-                        보건증
+                        보건증{needHealth ? " !" : ""}
                       </button>
                     )}
                   </div>
@@ -318,6 +337,14 @@ export default function StaffPage() {
                       targetIsFounder={m.user_id === ownerId}
                       onSaved={load}
                     />
+                    <div className="mt-3 border-t border-slate-100 pt-3">
+                      <BankAccount
+                        storeId={currentStoreId}
+                        userId={m.user_id}
+                        mode="admin"
+                        canApprove={isOwner}
+                      />
+                    </div>
                   </div>
                 )}
                 {certFor === m.user_id && currentStoreId && (
@@ -329,7 +356,8 @@ export default function StaffPage() {
                   </div>
                 )}
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

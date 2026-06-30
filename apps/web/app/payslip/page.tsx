@@ -19,6 +19,30 @@ function nextMonthStart(period: string): string {
   const d = new Date(y, m, 1); // m은 0-index 기준 다음달
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 }
+const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+function dayLabel(ymd: string) {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return `${String(m).padStart(2, "0")}월 ${String(d).padStart(2, "0")}일 (${
+    DOW[new Date(y, m - 1, d).getDay()]
+  })`;
+}
+function hhmm(iso: string | null) {
+  if (!iso) return "--:--";
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(
+    d.getMinutes()
+  ).padStart(2, "0")}`;
+}
+function hourText(min: number) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h}시간 ${m}분` : `${h}시간`;
+}
+interface DayRow {
+  work_date: string;
+  clock_in_at: string | null;
+  clock_out_at: string | null;
+}
 
 function PayRow({
   label,
@@ -64,6 +88,8 @@ function PayslipInner() {
   const [name, setName] = useState("");
   const [wage, setWage] = useState<number | null>(null);
   const [minutes, setMinutes] = useState(0);
+  const [days, setDays] = useState<DayRow[]>([]);
+  const [openHist, setOpenHist] = useState(false);
   const [weeklyIncl, setWeeklyIncl] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -103,19 +129,19 @@ function PayslipInner() {
       .maybeSingle();
     setWeeklyIncl(!!(ctr?.content as any)?.weeklyHolidayIncluded);
 
-    // 근무시간
+    // 근무시간 + 일자별 내역
     const { data: att } = await supabase
       .from("attendance")
-      .select("clock_in_at, clock_out_at")
+      .select("work_date, clock_in_at, clock_out_at")
       .eq("store_id", currentStoreId)
       .eq("user_id", targetUser)
       .gte("work_date", `${period}-01`)
-      .lt("work_date", nextMonthStart(period));
+      .lt("work_date", nextMonthStart(period))
+      .order("work_date", { ascending: true });
+    const list = (att as DayRow[]) ?? [];
+    setDays(list);
     setMinutes(
-      ((att as any[]) ?? []).reduce(
-        (s, r) => s + minutesBetween(r.clock_in_at, r.clock_out_at),
-        0
-      )
+      list.reduce((s, r) => s + minutesBetween(r.clock_in_at, r.clock_out_at), 0)
     );
     setLoading(false);
   }, [ready, currentStoreId, account, targetUser, period]);
@@ -201,6 +227,60 @@ function PayslipInner() {
               <p className="text-xs text-blue-100">실지급액</p>
               <p className="text-3xl font-extrabold">{won(p.net)}</p>
             </div>
+
+            {/* 근무내역 (펼치기) */}
+            <button
+              onClick={() => setOpenHist((v) => !v)}
+              className="mt-6 flex w-full items-center justify-between"
+            >
+              <h2 className="text-sm font-bold text-slate-500">
+                근무내역 ({days.length}일)
+              </h2>
+              <span
+                className={`text-slate-400 transition-transform ${
+                  openHist ? "rotate-180" : ""
+                }`}
+              >
+                ⌄
+              </span>
+            </button>
+            {openHist && (
+              <div className="mt-2 overflow-hidden rounded-xl border border-slate-100">
+                {days.length === 0 ? (
+                  <p className="px-3 py-4 text-center text-xs text-slate-400">
+                    근무 기록이 없어요.
+                  </p>
+                ) : (
+                  days.map((d) => {
+                    const min = minutesBetween(d.clock_in_at, d.clock_out_at);
+                    const amount = Math.round((min / 60) * (wage ?? 0));
+                    const worked = !!d.clock_in_at && min > 0;
+                    return (
+                      <div
+                        key={d.work_date}
+                        className="flex items-center justify-between border-b border-slate-100 px-3 py-2.5 last:border-0"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-800">
+                            {dayLabel(d.work_date)}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-slate-400">
+                            {worked
+                              ? `${hhmm(d.clock_in_at)} ~ ${hhmm(
+                                  d.clock_out_at
+                                )} (${hourText(min)})`
+                              : "결근"}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-sm font-semibold text-slate-800 tabular-nums">
+                          {won(amount)}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
 
             <p className="mt-4 text-center text-[11px] text-slate-400">
               본 명세서는 실근무 기록 기반 추정치이며, 주휴·공제는 간이 계산입니다.

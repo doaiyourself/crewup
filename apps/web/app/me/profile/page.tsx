@@ -8,6 +8,7 @@ import { ROLE_LABEL } from "@/lib/mock-data";
 import { CONTRACT_STATUS_LABEL, type ContractStatus } from "@/lib/contract";
 import { won } from "@/lib/format";
 import { PageHeader, Card, Avatar, AccountBadge } from "@/components/ui";
+import { BankAccount } from "@/components/bank-account";
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -94,6 +95,19 @@ export default function ProfilePage() {
           <InfoRow label="소속 매장" value={currentMembership?.storeName ?? "-"} />
           {wage != null && <InfoRow label="시급" value={won(wage)} />}
           {phone && <InfoRow label="연락처" value={phone} />}
+        </Card>
+
+        <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">
+          급여 계좌
+        </h2>
+        <Card>
+          {currentStoreId && (
+            <BankAccount
+              storeId={currentStoreId}
+              userId={account.id}
+              mode="self"
+            />
+          )}
         </Card>
 
         <h2 className="mb-1 mt-5 px-1 text-sm font-bold text-slate-500">
