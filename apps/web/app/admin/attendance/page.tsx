@@ -282,6 +282,23 @@ export default function AdminAttendancePage() {
     await load();
   };
 
+  const remove = async (r: Row) => {
+    if (
+      !confirm(
+        `${dateLabel(r.work_date)} ${r.name}님의 근무 기록을 삭제할까요?\n삭제하면 되돌릴 수 없어요.`
+      )
+    )
+      return;
+    const supabase = createClient();
+    const { error } = await supabase.from("attendance").delete().eq("id", r.id);
+    if (error) {
+      alert("삭제에 실패했어요. 권한을 확인해 주세요.");
+      return;
+    }
+    setEditing(null);
+    await load();
+  };
+
   // 출퇴근 관리 권한: 사장 항상, 점장은 위임된 경우만 (백엔드 RLS와 일치)
   const canManage =
     account?.role === "owner" ||
@@ -687,6 +704,12 @@ export default function AdminAttendancePage() {
                         취소
                       </button>
                     </div>
+                    <button
+                      onClick={() => remove(r)}
+                      className="w-full rounded-lg border border-red-200 bg-white py-2 text-sm font-semibold text-red-500 transition active:scale-[0.98]"
+                    >
+                      근무 기록 삭제
+                    </button>
                   </div>
                 )}
               </Card>
