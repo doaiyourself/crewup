@@ -47,38 +47,36 @@ export default function MyPayrollPage() {
   const { stats, loading } = useMyAttendance(currentStoreId);
   const [wage, setWage] = useState<number | null>(null);
   const [weeklyIncl, setWeeklyIncl] = useState(false);
+  const [wageType, setWageType] = useState<"hourly" | "monthly">("hourly");
+  const [insurance, setInsurance] = useState(false);
 
   useEffect(() => {
     if (!currentStoreId || currentStoreId === "demo-store" || !account) return;
     const supabase = createClient();
     const uid = account.id;
-    (async () => {
-      const [{ data: m }, { data: c }] = await Promise.all([
-        supabase
-          .from("memberships")
-          .select("hourly_wage")
-          .eq("store_id", currentStoreId)
-          .eq("user_id", uid)
-          .maybeSingle(),
-        supabase
-          .from("contracts")
-          .select("content")
-          .eq("store_id", currentStoreId)
-          .eq("user_id", uid)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
-      setWage(m?.hourly_wage ?? null);
-      setWeeklyIncl(!!(c?.content as any)?.weeklyHolidayIncluded);
-    })();
+    supabase
+      .from("memberships")
+      .select("hourly_wage, wage_type, weekly_included, insurance")
+      .eq("store_id", currentStoreId)
+      .eq("user_id", uid)
+      .maybeSingle()
+      .then(({ data: m }) => {
+        setWage(m?.hourly_wage ?? null);
+        setWageType(((m?.wage_type as any) ?? "hourly") as "hourly" | "monthly");
+        setWeeklyIncl(!!m?.weekly_included);
+        setInsurance(!!m?.insurance);
+      });
   }, [currentStoreId, account]);
 
   if (!account) return null;
 
   const p: PayrollResult | null =
     wage != null
-      ? computePayroll(stats.totalMinutes, wage, 0, weeklyIncl)
+      ? computePayroll(stats.totalMinutes, wage, {
+          weeklyIncluded: weeklyIncl,
+          wageType,
+          insurance,
+        })
       : null;
 
   return (

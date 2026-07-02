@@ -28,6 +28,9 @@ interface Member {
   hourly_wage: number;
   status: string;
   joined_at: string;
+  wage_type?: "hourly" | "monthly";
+  weekly_included?: boolean;
+  insurance?: boolean;
 }
 
 const FILTERS: { key: "all" | Role; label: string }[] = [
@@ -232,7 +235,8 @@ export default function StaffPage() {
                       </span>
                     </div>
                     <p className="mt-0.5 truncate text-xs text-slate-500">
-                      {m.position || "-"} · {won(m.hourly_wage)}/h
+                      {m.position || "-"} · {won(m.hourly_wage)}
+                      {m.wage_type === "monthly" ? "/월" : "/h"}
                       {m.phone ? ` · ${m.phone}` : ""}
                     </p>
                   </div>
@@ -332,6 +336,9 @@ export default function StaffPage() {
                       initialRole={m.role}
                       initialWage={m.hourly_wage}
                       initialPosition={m.position ?? ""}
+                      initialWageType={m.wage_type ?? "hourly"}
+                      initialWeeklyIncluded={!!m.weekly_included}
+                      initialInsurance={!!m.insurance}
                       canChangeRole={isOwner}
                       isFounder={isFounder}
                       targetIsFounder={m.user_id === ownerId}

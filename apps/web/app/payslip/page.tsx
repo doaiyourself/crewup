@@ -91,6 +91,8 @@ function PayslipInner() {
   const [days, setDays] = useState<DayRow[]>([]);
   const [openHist, setOpenHist] = useState(false);
   const [weeklyIncl, setWeeklyIncl] = useState(false);
+  const [wageType, setWageType] = useState<"hourly" | "monthly">("hourly");
+  const [insurance, setInsurance] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -109,25 +111,17 @@ function PayslipInner() {
       setName(m?.name ?? "직원");
     }
 
-    // 시급
+    // 시급 + 급여 옵션 (멤버십)
     const { data: mem } = await supabase
       .from("memberships")
-      .select("hourly_wage")
+      .select("hourly_wage, wage_type, weekly_included, insurance")
       .eq("store_id", currentStoreId)
       .eq("user_id", targetUser)
       .maybeSingle();
     setWage(mem?.hourly_wage ?? null);
-
-    // 계약서상 주휴수당 시급 포함 여부 (최신)
-    const { data: ctr } = await supabase
-      .from("contracts")
-      .select("content")
-      .eq("store_id", currentStoreId)
-      .eq("user_id", targetUser)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    setWeeklyIncl(!!(ctr?.content as any)?.weeklyHolidayIncluded);
+    setWageType(((mem?.wage_type as any) ?? "hourly") as "hourly" | "monthly");
+    setWeeklyIncl(!!mem?.weekly_included);
+    setInsurance(!!mem?.insurance);
 
     // 근무시간 + 일자별 내역
     const { data: att } = await supabase
@@ -159,7 +153,13 @@ function PayslipInner() {
   }
 
   const p: PayrollResult | null =
-    wage != null ? computePayroll(minutes, wage, 0, weeklyIncl) : null;
+    wage != null
+      ? computePayroll(minutes, wage, {
+          weeklyIncluded: weeklyIncl,
+          wageType,
+          insurance,
+        })
+      : null;
   const [py, pm] = period.split("-");
 
   return (
@@ -208,7 +208,14 @@ function PayslipInner() {
           <>
             <h2 className="mb-1 mt-6 text-sm font-bold text-slate-500">지급 내역</h2>
             <div className="overflow-hidden rounded-xl border border-slate-100">
-              <PayRow label={`기본급 (${p.totalHours}시간 × ${won(wage!)})`} value={won(p.basePay)} />
+              <PayRow
+                label={
+                  wageType === "monthly"
+                    ? "기본급 (월급)"
+                    : `기본급 (${p.totalHours}시간 × ${won(wage!)})`
+                }
+                value={won(p.basePay)}
+              />
               <PayRow
                 label="주휴수당"
                 value={weeklyIncl ? "시급 포함" : won(p.weeklyAllowance)}
@@ -219,7 +226,13 @@ function PayslipInner() {
 
             <h2 className="mb-1 mt-5 text-sm font-bold text-slate-500">공제 내역</h2>
             <div className="overflow-hidden rounded-xl border border-slate-100">
-              <PayRow label="4대보험·소득세 (추정)" value={won(p.deduction)} minus />
+              <PayRow
+                label={
+                  insurance ? "4대보험·소득세 (추정)" : "사업소득세 3.3% (추정)"
+                }
+                value={won(p.deduction)}
+                minus
+              />
               <PayRow label="실지급액" value={won(p.net)} strong />
             </div>
 

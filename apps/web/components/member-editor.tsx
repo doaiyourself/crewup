@@ -24,6 +24,9 @@ export function MemberEditor({
   userId,
   initialRole,
   initialWage,
+  initialWageType = "hourly",
+  initialWeeklyIncluded = false,
+  initialInsurance = false,
   canChangeRole,
   isFounder = false,
   targetIsFounder = false,
@@ -34,6 +37,9 @@ export function MemberEditor({
   initialRole: Role;
   initialWage: number;
   initialPosition: string;
+  initialWageType?: "hourly" | "monthly";
+  initialWeeklyIncluded?: boolean;
+  initialInsurance?: boolean;
   canChangeRole: boolean;
   isFounder?: boolean; // 현재 로그인이 최초 대표인가 (공동 사장 지정 권한)
   targetIsFounder?: boolean; // 이 멤버가 최초 대표인가 (변경 불가)
@@ -41,6 +47,11 @@ export function MemberEditor({
 }) {
   const [role, setRole] = useState<Role>(initialRole);
   const [wage, setWage] = useState(initialWage);
+  const [wageType, setWageType] = useState<"hourly" | "monthly">(
+    initialWageType
+  );
+  const [weeklyIncl, setWeeklyIncl] = useState(initialWeeklyIncluded);
+  const [insurance, setInsurance] = useState(initialInsurance);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -62,7 +73,12 @@ export function MemberEditor({
     setSaving(true);
     setError("");
     const supabase = createClient();
-    const patch: any = { hourly_wage: wage };
+    const patch: any = {
+      hourly_wage: wage,
+      wage_type: wageType,
+      weekly_included: weeklyIncl,
+      insurance,
+    };
     // 직책(역할) 변경 가능 시: role + 직책 라벨 동기화
     if (canChangeRole) {
       patch.role = role;
@@ -147,18 +163,58 @@ export function MemberEditor({
         )}
       </label>
 
-      {/* 시급 */}
-      <label className="block">
-        <span className="mb-1 block text-[11px] font-semibold text-slate-500">
-          시급(원)
-        </span>
-        <input
-          type="number"
-          value={wage}
-          onChange={(e) => setWage(Number(e.target.value))}
-          className="me-i"
-        />
-      </label>
+      {/* 임금 형태 + 금액 */}
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block">
+          <span className="mb-1 block text-[11px] font-semibold text-slate-500">
+            임금 형태
+          </span>
+          <select
+            value={wageType}
+            onChange={(e) =>
+              setWageType(e.target.value as "hourly" | "monthly")
+            }
+            className="me-i"
+          >
+            <option value="hourly">시급</option>
+            <option value="monthly">월급</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-[11px] font-semibold text-slate-500">
+            {wageType === "monthly" ? "월급(원)" : "시급(원)"}
+          </span>
+          <input
+            type="number"
+            value={wage}
+            onChange={(e) => setWage(Number(e.target.value))}
+            className="me-i"
+          />
+        </label>
+      </div>
+
+      {/* 주휴수당 포함 / 4대보험 (급여 계산에 반영) */}
+      <div className="space-y-1.5 rounded-lg bg-slate-50 px-3 py-2.5">
+        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+          <input
+            type="checkbox"
+            checked={weeklyIncl}
+            onChange={(e) => setWeeklyIncl(e.target.checked)}
+          />
+          주휴수당 시급에 포함 (포괄)
+        </label>
+        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+          <input
+            type="checkbox"
+            checked={insurance}
+            onChange={(e) => setInsurance(e.target.checked)}
+          />
+          4대보험 가입
+        </label>
+        <p className="text-[11px] leading-relaxed text-slate-400">
+          급여 계산에 반영돼요. 기본값은 근로계약서에서 가져옵니다.
+        </p>
+      </div>
 
       {error && (
         <p className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-500">

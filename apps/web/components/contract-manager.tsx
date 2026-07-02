@@ -83,6 +83,17 @@ export function ContractManager({
       })
       .select("id, status")
       .single();
+    // 계약서 값 → 멤버십 급여 옵션 seed (급여 계산 기본값)
+    await supabase
+      .from("memberships")
+      .update({
+        hourly_wage: form.wage,
+        wage_type: form.wageType,
+        weekly_included: !!form.weeklyHolidayIncluded,
+        insurance: form.insurance,
+      })
+      .eq("store_id", storeId)
+      .eq("user_id", userId);
     setContract(data as any);
     setSaving(false);
     setShowForm(false);

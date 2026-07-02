@@ -15,44 +15,59 @@ interface Line {
   color: string;
   wage: number;
   minutes: number;
-  weeklyIncluded: boolean; // 계약서상 주휴수당 시급 포함
+  weeklyIncluded: boolean;
+  wageType: "hourly" | "monthly";
+  insurance: boolean;
 }
 
 function minutesBetween(a: string | null, b: string | null): number {
   if (!a || !b) return 0;
   return Math.max(0, Math.round((+new Date(b) - +new Date(a)) / 60000));
 }
-function ymLabel() {
+function curYm() {
   const d = new Date();
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function ymLabel(ym: string) {
+  const [y, m] = ym.split("-");
+  return `${y}년 ${Number(m)}월`;
+}
+function shiftYm(ym: string, delta: number) {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function monthStartOf(ym: string) {
+  return `${ym}-01`;
+}
+function nextMonthStartOf(ym: string) {
+  return `${shiftYm(ym, 1)}-01`;
 }
 
 export default function AdminPayrollPage() {
   const { currentStoreId } = useSession();
   const [lines, setLines] = useState<Line[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ym, setYm] = useState(curYm());
+  const isCurrent = ym === curYm();
 
   const load = useCallback(async () => {
     if (!currentStoreId || currentStoreId === "demo-store") {
       setLoading(false);
       return;
     }
+    setLoading(true);
     const supabase = createClient();
-    const monthStart = new Date().toISOString().slice(0, 8) + "01";
-    const [{ data: members }, { data: att }, { data: contracts }] =
-      await Promise.all([
-        supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
-        supabase
-          .from("attendance")
-          .select("user_id, clock_in_at, clock_out_at")
-          .eq("store_id", currentStoreId)
-          .gte("work_date", monthStart),
-        supabase
-          .from("contracts")
-          .select("user_id, content, created_at")
-          .eq("store_id", currentStoreId)
-          .order("created_at", { ascending: false }),
-      ]);
+    const monthStart = monthStartOf(ym);
+    const [{ data: members }, { data: att }] = await Promise.all([
+      supabase.rpc("list_store_members", { p_store_id: currentStoreId }),
+      supabase
+        .from("attendance")
+        .select("user_id, clock_in_at, clock_out_at")
+        .eq("store_id", currentStoreId)
+        .gte("work_date", monthStart)
+        .lt("work_date", nextMonthStartOf(ym)),
+    ]);
     setCachedMembers(currentStoreId, (members as any[]) ?? []);
     const minByUser = new Map<string, number>();
     ((att as any[]) ?? []).forEach((r) =>
@@ -62,12 +77,6 @@ export default function AdminPayrollPage() {
           minutesBetween(r.clock_in_at, r.clock_out_at)
       )
     );
-    // 직원별 최신 계약서의 '주휴수당 시급 포함' 여부
-    const inclByUser = new Map<string, boolean>();
-    ((contracts as any[]) ?? []).forEach((c) => {
-      if (!inclByUser.has(c.user_id))
-        inclByUser.set(c.user_id, !!c.content?.weeklyHolidayIncluded);
-    });
     setLines(
       ((members as any[]) ?? []).map((m) => ({
         user_id: m.user_id,
@@ -75,11 +84,13 @@ export default function AdminPayrollPage() {
         color: m.avatar_color,
         wage: m.hourly_wage,
         minutes: minByUser.get(m.user_id) ?? 0,
-        weeklyIncluded: inclByUser.get(m.user_id) ?? false,
+        weeklyIncluded: !!m.weekly_included,
+        wageType: (m.wage_type as "hourly" | "monthly") ?? "hourly",
+        insurance: !!m.insurance,
       }))
     );
     setLoading(false);
-  }, [currentStoreId]);
+  }, [currentStoreId, ym]);
 
   useEffect(() => {
     load();
@@ -87,16 +98,40 @@ export default function AdminPayrollPage() {
 
   const computed = lines.map((l) => ({
     ...l,
-    pay: computePayroll(l.minutes, l.wage, 0, l.weeklyIncluded),
+    pay: computePayroll(l.minutes, l.wage, {
+      weeklyIncluded: l.weeklyIncluded,
+      wageType: l.wageType,
+      insurance: l.insurance,
+    }),
   }));
   const totalGross = computed.reduce((a, c) => a + c.pay.gross, 0);
   const totalNet = computed.reduce((a, c) => a + c.pay.net, 0);
 
   return (
     <>
-      <PageHeader title="급여 산정" subtitle={ymLabel()} right={<AccountBadge light />} />
+      <PageHeader title="급여 산정" subtitle={ymLabel(ym)} right={<AccountBadge light />} />
 
       <div className="px-4 pt-4">
+        {/* 월 선택 */}
+        <div className="mb-3 flex items-center justify-between rounded-xl bg-white px-2 py-1.5 ring-1 ring-slate-100">
+          <button
+            onClick={() => setYm((v) => shiftYm(v, -1))}
+            className="rounded-lg px-3 py-1.5 text-lg font-bold text-slate-500 active:bg-slate-100"
+            aria-label="이전 달"
+          >
+            ‹
+          </button>
+          <span className="text-sm font-bold text-slate-800">{ymLabel(ym)}</span>
+          <button
+            onClick={() => !isCurrent && setYm((v) => shiftYm(v, 1))}
+            disabled={isCurrent}
+            className="rounded-lg px-3 py-1.5 text-lg font-bold text-slate-500 active:bg-slate-100 disabled:text-slate-200"
+            aria-label="다음 달"
+          >
+            ›
+          </button>
+        </div>
+
         {loading ? (
           <Card className="py-10 text-center text-sm text-slate-400">
             불러오는 중…
@@ -105,7 +140,7 @@ export default function AdminPayrollPage() {
           <>
             <Card tone="brand">
               <p className="text-xs text-blue-100">
-                이번 달 총 인건비 (지급액 합계, 추정)
+                {ymLabel(ym)} 총 인건비 (지급액 합계, 추정)
               </p>
               <p className="mt-1 text-3xl font-extrabold">{won(totalGross)}</p>
               <p className="mt-3 text-xs text-blue-100">
@@ -120,7 +155,7 @@ export default function AdminPayrollPage() {
               {computed.map((c) => (
                 <Link
                   key={c.user_id}
-                  href={`/payslip?user=${c.user_id}`}
+                  href={`/payslip?user=${c.user_id}&period=${ym}`}
                   className="block"
                 >
                   <Card className="flex items-center gap-3">
@@ -128,8 +163,13 @@ export default function AdminPayrollPage() {
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-slate-900">{c.name}</p>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {c.pay.totalHours}시간 · {won(c.wage)}/h · 주휴{" "}
-                        {c.weeklyIncluded ? "포함" : wonShort(c.pay.weeklyAllowance)}
+                        {c.wageType === "monthly"
+                          ? `월급 ${wonShort(c.wage)}`
+                          : `${c.pay.totalHours}시간 · ${won(c.wage)}/h · 주휴 ${
+                              c.weeklyIncluded
+                                ? "포함"
+                                : wonShort(c.pay.weeklyAllowance)
+                            }`}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
